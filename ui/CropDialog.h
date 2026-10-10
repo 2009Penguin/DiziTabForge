@@ -1,11 +1,11 @@
 #ifndef DIZITABFORGE_UI_CROPDIALOG_H
 #define DIZITABFORGE_UI_CROPDIALOG_H
 
+#include <QDialog>
 #include <QImage>
 #include <QPoint>
 #include <QRect>
 #include <QString>
-#include <QWidget>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {

@@ -135,8 +135,8 @@ QString describeHttpFailure(const GmlClient::ResponseSink &sink) {
     if (sink.httpStatus == 429) {
         return QStringLiteral("HTTP 429: the free model is rate limited, retry later.");
     }
-    return QStringLiteral("HTTP %1: %2")
-            .arg(sink.httpStatus, QString::fromUtf8(sink.body.left(400)));
+    const QString body = QString::fromUtf8(sink.body.left(400));
+    return QStringLiteral("HTTP %1: %2").arg(sink.httpStatus).arg(body);
 }
 
 }

@@ -16,14 +16,14 @@ enum class TokenType {
     Flat
 };
 
-using TokenList = std::vector<ScoreToken>;
-
 struct ScoreToken {
     TokenType type = TokenType::Beat;
     int value = 0;
     std::size_t position = 0;
     std::string text;
 };
+
+using TokenList = std::vector<ScoreToken>;
 
 }
 

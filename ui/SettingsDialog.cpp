@@ -2,12 +2,17 @@
 
 #include "ui_SettingsDialog.h"
 
+#include <QDialog>
+#include <QPushButton>
+
 #include "core/util/PathUtil.h"
 
 SettingsDialog::SettingsDialog(const dizi::AppConfig &config, QWidget *parent)
     : QDialog(parent),
       ui(new Ui::SettingsDialog()) {
     ui->setupUi(this);
+    connect(ui->saveButton, &QPushButton::clicked, this, &SettingsDialog::saveSettings);
+    connect(ui->cancelButton, &QPushButton::clicked, this, &QDialog::reject);
     ui->apiKeyEdit->setText(config.apiKey);
     ui->endpointEdit->setText(config.endpoint);
     ui->modelEdit->setText(config.model);

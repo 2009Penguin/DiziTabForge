@@ -4,13 +4,14 @@
 #include <array>
 #include <string>
 
+#include "core/model/FingerPattern.h"
 #include "core/model/Note.h"
 
 namespace dizi {
 
 struct Fingering {
     std::string pitchName;
-    std::array<bool, 6> holes{};
+    std::array<bool, kHoleCount> holes{};
     bool overblown = false;
 };
 

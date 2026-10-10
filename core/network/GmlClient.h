@@ -27,6 +27,8 @@ class GmlClient {
 public:
     using ProgressCallback = std::function<void(qint64, qint64)>;
 
+    struct ResponseSink;
+
     void setRequest(const GmlRequest &request);
 
     void setProgressCallback(ProgressCallback callback);
@@ -34,8 +36,6 @@ public:
     GmlResponse send();
 
 private:
-    struct ResponseSink;
-
     GmlResponse prepare() const;
 
     GmlResponse buildResult(int curlCode, ResponseSink &sink) const;

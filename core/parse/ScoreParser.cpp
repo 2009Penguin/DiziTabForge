@@ -1,7 +1,5 @@
 #include "core/parse/ScoreParser.h"
 
-#include <array>
-
 namespace dizi {
 
 namespace {
@@ -9,38 +7,6 @@ namespace {
 constexpr int kNoAccidental = 0;
 constexpr int kSharpSign = 1;
 constexpr int kFlatSign = -1;
-
-using Handler = bool (ScoreParser::*)(const ScoreToken &, ScoreParser::Modifiers &,
-                                      TokenList &) const;
-
-struct Route {
-    TokenType type;
-    Handler handler;
-};
-
-using Router = std::array<Route, 7>;
-
-const Router &router() {
-    static const Router routes{{
-            {TokenType::Beat, &ScoreParser::applyBeat},
-            {TokenType::Hold, &ScoreParser::applyHold},
-            {TokenType::Rest, &ScoreParser::applyRest},
-            {TokenType::Sharp, &ScoreParser::applyAccidental},
-            {TokenType::Flat, &ScoreParser::applyAccidental},
-            {TokenType::OctaveUp, &ScoreParser::applyOctave},
-            {TokenType::OctaveDown, &ScoreParser::applyOctave},
-    }};
-    return routes;
-}
-
-const Handler *findHandler(TokenType type) {
-    for (const Route &route : router()) {
-        if (route.type == type) {
-            return &route.handler;
-        }
-    }
-    return nullptr;
-}
 
 bool isMarker(TokenType type) {
     return type == TokenType::Sharp || type == TokenType::Flat ||
@@ -64,8 +30,30 @@ bool ScoreParser::fail(const ScoreToken &token, const std::string &reason) {
     return false;
 }
 
+bool ScoreParser::update(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved) {
+    struct Route {
+        TokenType type;
+        Handler handler;
+    };
+    static const Route routes[] = {
+            {TokenType::Beat, &ScoreParser::applyBeat},
+            {TokenType::Hold, &ScoreParser::applyHold},
+            {TokenType::Rest, &ScoreParser::applyRest},
+            {TokenType::Sharp, &ScoreParser::applyAccidental},
+            {TokenType::Flat, &ScoreParser::applyAccidental},
+            {TokenType::OctaveUp, &ScoreParser::applyOctave},
+            {TokenType::OctaveDown, &ScoreParser::applyOctave},
+    };
+    for (const Route &route : routes) {
+        if (route.type == token.type) {
+            return (this->*route.handler)(token, modifiers, resolved);
+        }
+    }
+    return fail(token, "Unsupported notation token");
+}
+
 bool ScoreParser::applyBeat(const ScoreToken &token, Modifiers &modifiers,
-                            TokenList &resolved) const {
+                            TokenList &resolved) {
     dropTrailingMarkers(resolved);
     resolved.push_back(token);
     if (modifiers.accidental != kNoAccidental) {
@@ -91,7 +79,7 @@ bool ScoreParser::applyBeat(const ScoreToken &token, Modifiers &modifiers,
 }
 
 bool ScoreParser::applyHold(const ScoreToken &token, Modifiers &modifiers,
-                            TokenList &resolved) const {
+                            TokenList &resolved) {
     if (modifiers.accidental != kNoAccidental || modifiers.octave != 0) {
         return fail(token, "A hold mark cannot follow an accidental or octave mark");
     }
@@ -106,7 +94,7 @@ bool ScoreParser::applyHold(const ScoreToken &token, Modifiers &modifiers,
 }
 
 bool ScoreParser::applyRest(const ScoreToken &token, Modifiers &modifiers,
-                            TokenList &resolved) const {
+                            TokenList &resolved) {
     modifiers = Modifiers();
     dropTrailingMarkers(resolved);
     ScoreToken rest = token;
@@ -117,13 +105,15 @@ bool ScoreParser::applyRest(const ScoreToken &token, Modifiers &modifiers,
 }
 
 bool ScoreParser::applyAccidental(const ScoreToken &token, Modifiers &modifiers,
-                                  TokenList &resolved) const {
+                                  TokenList &resolved) {
+    (void) resolved;
     modifiers.accidental = token.type == TokenType::Sharp ? kSharpSign : kFlatSign;
     return true;
 }
 
 bool ScoreParser::applyOctave(const ScoreToken &token, Modifiers &modifiers,
-                              TokenList &resolved) const {
+                              TokenList &resolved) {
+    (void) resolved;
     const int step = token.type == TokenType::OctaveUp ? 1 : -1;
     modifiers.octave += step;
     if (modifiers.octave > 2 || modifiers.octave < -2) {
@@ -135,11 +125,7 @@ bool ScoreParser::applyOctave(const ScoreToken &token, Modifiers &modifiers,
 bool ScoreParser::combine(const TokenList &input, TokenList &resolved) {
     Modifiers modifiers;
     for (const ScoreToken &token : input) {
-        const Handler *handler = findHandler(token.type);
-        if (handler == nullptr) {
-            return fail(token, "Unsupported notation token");
-        }
-        if (!(this->**handler)(token, modifiers, resolved)) {
+        if (!update(token, modifiers, resolved)) {
             return false;
         }
     }

@@ -3,9 +3,11 @@
 #include "ui_CropDialog.h"
 
 #include <QColor>
+#include <QDialog>
 #include <QEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPushButton>
 
 #include "core/util/ImageUtil.h"
 #include "core/util/PathUtil.h"
@@ -22,6 +24,9 @@ CropDialog::CropDialog(const QString &imagePath, QWidget *parent)
       ui(new Ui::CropDialog()),
       m_sourcePath(imagePath) {
     ui->setupUi(this);
+    connect(ui->cropButton, &QPushButton::clicked, this, &CropDialog::applyCrop);
+    connect(ui->resetButton, &QPushButton::clicked, this, &CropDialog::resetSelection);
+    connect(ui->cancelButton, &QPushButton::clicked, this, &QDialog::reject);
     ui->imageLabel->installEventFilter(this);
     QString error;
     if (!image_util::loadImage(imagePath, m_source, error)) {

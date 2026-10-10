@@ -41,10 +41,10 @@ struct WorkerResult {
     QString error;
 };
 
-bool prepareImages(const QStringList &paths, GmlRequest &request, QString &error) {
-    const ImageEncoder encoder;
+bool prepareImages(const QStringList &paths, dizi::GmlRequest &request, QString &error) {
+    const dizi::ImageEncoder encoder;
     for (const QString &path : paths) {
-        EncodedImage encoded;
+        dizi::EncodedImage encoded;
         if (!encoder.encode(path, encoded, error)) {
             return false;
         }
@@ -55,7 +55,7 @@ bool prepareImages(const QStringList &paths, GmlRequest &request, QString &error
 
 bool runRecognition(const dizi::AppConfig &config, const QStringList &paths, WorkerResult &result,
                     const dizi::GmlClient::ProgressCallback &onProgress) {
-    GmlRequest request;
+    dizi::GmlRequest request;
     request.endpoint = config.endpoint;
     request.apiKey = config.apiKey;
     request.model = config.model;
@@ -69,7 +69,7 @@ bool runRecognition(const dizi::AppConfig &config, const QStringList &paths, Wor
     dizi::GmlClient client;
     client.setRequest(request);
     client.setProgressCallback(onProgress);
-    const GmlResponse response = client.send();
+    const dizi::GmlResponse response = client.send();
     if (!response.ok) {
         result.error = response.error;
         return false;
@@ -102,6 +102,9 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::connectSignals() {
+    connect(ui->generateButton, &QPushButton::clicked, this, &MainWindow::generatePdf);
+    connect(ui->settingsButton, &QPushButton::clicked, this, &MainWindow::openSettings);
+    connect(ui->addButton, &QPushButton::clicked, this, &MainWindow::chooseImages);
     connect(ui->dropArea, &ImageDropWidget::imagesDropped, this, &MainWindow::addImages);
     connect(ui->thumbList, &QListWidget::itemDoubleClicked, this, &MainWindow::openThumbnail);
     connect(ui->thumbList, &QListWidget::customContextMenuRequested, this,

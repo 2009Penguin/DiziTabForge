@@ -19,17 +19,21 @@ private:
         int octave = 0;
     };
 
+    using Handler = bool (ScoreParser::*)(const ScoreToken &, Modifiers &, TokenList &);
+
     bool combine(const TokenList &input, TokenList &resolved);
 
-    bool applyBeat(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved) const;
+    bool applyBeat(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved);
 
-    bool applyHold(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved) const;
+    bool applyHold(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved);
 
-    bool applyRest(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved) const;
+    bool applyRest(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved);
 
-    bool applyAccidental(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved) const;
+    bool applyAccidental(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved);
 
-    bool applyOctave(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved) const;
+    bool applyOctave(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved);
+
+    bool update(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved);
 
     bool fail(const ScoreToken &token, const std::string &reason);
 

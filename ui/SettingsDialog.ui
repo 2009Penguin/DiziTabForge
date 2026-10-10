@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>520</width>
-    <height>330</height>
+    <width>540</width>
+    <height>430</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>480</width>
-    <height>300</height>
+    <width>520</width>
+    <height>420</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -251,38 +251,4 @@ QPushButton#saveButton:hover {
   </layout>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>saveButton</sender>
-   <signal>clicked()</signal>
-   <receiver>SettingsDialog</receiver>
-   <slot>saveSettings()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>436</x>
-     <y>286</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>259</x>
-     <y>164</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>cancelButton</sender>
-   <signal>clicked()</signal>
-   <receiver>SettingsDialog</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>352</x>
-     <y>286</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>259</x>
-     <y>164</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
 </ui>
