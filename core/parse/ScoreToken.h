@@ -19,6 +19,8 @@ enum class TokenType {
 struct ScoreToken {
     TokenType type = TokenType::Beat;
     int value = 0;
+    int accidental = 0;
+    int octave = 0;
     std::size_t position = 0;
     std::string text;
 };

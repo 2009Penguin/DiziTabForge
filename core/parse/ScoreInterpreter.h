@@ -15,21 +15,11 @@ public:
     const std::string &error() const;
 
 private:
-    struct Cursor {
-        int number = 0;
-        int accidental = 0;
-        int octave = 0;
-    };
+    bool onBeat(const ScoreToken &token, Score &target);
 
-    using Handler = bool (ScoreInterpreter::*)(const ScoreToken &);
+    bool onRest(const ScoreToken &token, Score &target);
 
-    bool onAccidental(const ScoreToken &token);
-
-    bool onOctave(const ScoreToken &token);
-
-    bool onHold(const ScoreToken &token);
-
-    bool handleModifier(const ScoreToken &token);
+    bool onHold(const ScoreToken &token, Score &target);
 
     void appendNote(const ScoreToken &token, Score &target);
 
@@ -37,11 +27,7 @@ private:
 
     bool fail(const ScoreToken &token, const std::string &reason);
 
-    void reset();
-
     std::string m_error;
-    Cursor m_cursor;
-    bool m_noteOpen = false;
 };
 
 }

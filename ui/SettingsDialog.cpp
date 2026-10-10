@@ -18,7 +18,6 @@ SettingsDialog::SettingsDialog(const dizi::AppConfig &config, QWidget *parent)
     ui->modelEdit->setText(config.model);
     ui->timeoutSpin->setValue(config.timeoutSeconds);
     m_filePath = path_util::configFilePath();
-    ui->pathLabel->setText(path_util::describe(m_filePath));
 }
 
 SettingsDialog::~SettingsDialog() {

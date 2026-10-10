@@ -9,11 +9,7 @@
 
 namespace dizi {
 
-struct Fingering {
-    std::string pitchName;
-    std::array<bool, kHoleCount> holes{};
-    bool overblown = false;
-};
+using Fingering = FingerPattern;
 
 class FingerTable {
 public:

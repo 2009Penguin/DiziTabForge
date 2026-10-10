@@ -18,6 +18,10 @@ public:
     const std::string &error() const;
 
 private:
+    bool looksLikeNoise(const std::string &notation) const;
+
+    static bool isNotationSymbol(char symbol);
+
     ScoreTokenizer m_tokenizer;
     ScoreParser m_parser;
     ScoreInterpreter m_interpreter;

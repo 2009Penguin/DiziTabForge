@@ -21,6 +21,8 @@ bool isPdfPath(const QString &path);
 
 bool hasImageSuffix(const QString &path);
 
+QString normalizeChatEndpoint(const QString &endpoint);
+
 }
 
 #endif

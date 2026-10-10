@@ -12,6 +12,7 @@ namespace Ui {
 class CropDialog;
 }
 class QEvent;
+class QShowEvent;
 QT_END_NAMESPACE
 
 class CropDialog : public QDialog {
@@ -27,6 +28,8 @@ public:
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
+    void showEvent(QShowEvent *event) override;
+
 private slots:
     void applyCrop();
 
@@ -38,6 +41,8 @@ private:
     void setAnchor(const QPoint &position);
 
     void setCurrent(const QPoint &position);
+
+    QPoint toPreviewPoint(const QPoint &labelPoint) const;
 
     QRect selectionInWidget() const;
 

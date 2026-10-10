@@ -1,19 +1,31 @@
 #include "core/util/ImageUtil.h"
 
 #include <QBuffer>
-#include <QFileInfo>
 #include <QImageReader>
 #include <QImageWriter>
 
 namespace image_util {
 
+namespace {
+
+QString loadFailureText(const QString &path, const QImageReader &reader) {
+    const QByteArray format = reader.format().toLower();
+    if (!format.isEmpty() && !QImageReader::supportedImageFormats().contains(format)) {
+        return QStringLiteral("无法读取 %1：文件是 %2 格式，但程序缺少该格式的解码插件")
+                .arg(path, QString::fromLatin1(format).toUpper());
+    }
+    return QStringLiteral("无法读取 %1：%2").arg(path, reader.errorString());
+}
+
+}
+
 bool loadImage(const QString &path, QImage &target, QString &error) {
     QImageReader reader(path);
+    reader.setDecideFormatFromContent(true);
     reader.setAutoTransform(true);
     QImage loaded;
     if (!reader.read(&loaded) || loaded.isNull()) {
-        error = QStringLiteral("Cannot read image: %1 (%2)")
-                        .arg(path, reader.errorString());
+        error = loadFailureText(path, reader);
         return false;
     }
     target = loaded;
@@ -49,17 +61,19 @@ QByteArray toPngBytes(const QImage &image) {
 }
 
 QString mimeTypeOf(const QString &path) {
-    const QString suffix = QFileInfo(path).suffix().toLower();
-    if (suffix == QStringLiteral("jpg") || suffix == QStringLiteral("jpeg")) {
+    QImageReader reader(path);
+    reader.setDecideFormatFromContent(true);
+    const QByteArray format = reader.format().toLower();
+    if (format == "jpg" || format == "jpeg") {
         return QStringLiteral("image/jpeg");
     }
-    if (suffix == QStringLiteral("webp")) {
+    if (format == "webp") {
         return QStringLiteral("image/webp");
     }
-    if (suffix == QStringLiteral("bmp")) {
+    if (format == "bmp") {
         return QStringLiteral("image/bmp");
     }
-    if (suffix == QStringLiteral("gif")) {
+    if (format == "gif") {
         return QStringLiteral("image/gif");
     }
     return QStringLiteral("image/png");

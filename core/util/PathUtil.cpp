@@ -59,4 +59,16 @@ bool hasImageSuffix(const QString &path) {
     return known.contains(suffix);
 }
 
+QString normalizeChatEndpoint(const QString &endpoint) {
+    const QString trimmed = endpoint.trimmed();
+    if (trimmed.isEmpty() || trimmed.endsWith(QStringLiteral("/chat/completions"))) {
+        return trimmed;
+    }
+    QString normalized = trimmed;
+    while (normalized.endsWith(QLatin1Char('/'))) {
+        normalized.chop(1);
+    }
+    return normalized + QStringLiteral("/chat/completions");
+}
+
 }

@@ -2,14 +2,18 @@
 
 #include "ui_MainWindow.h"
 
+#include <QDebug>
 #include <QDesktopServices>
 #include <QDir>
+#include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QIcon>
 #include <QMenu>
 #include <QMessageBox>
 #include <QPixmap>
 #include <QShortcut>
+#include <QTextStream>
 #include <QUrl>
 #include <QtConcurrent/QtConcurrentRun>
 
@@ -17,10 +21,10 @@
 
 #include "core/network/GmlClient.h"
 #include "core/network/ImageEncoder.h"
+#include "core/parse/ScorePipeline.h"
 #include "core/util/ImageUtil.h"
 #include "core/util/PathUtil.h"
 #include "ui/CropDialog.h"
-#include "ui/ImageDropWidget.h"
 #include "ui/SettingsDialog.h"
 
 namespace {
@@ -29,12 +33,19 @@ constexpr int kThumbnailBound = 300;
 constexpr int kMaxErrorLines = 6;
 
 const QString kPrompt = QStringLiteral(
-        "你是简谱识别助手。请把图片中的笛子简谱逐行转写成纯文本数字谱，"
-        "只输出记法本身，不要解释、不要表格、不要标点。"
-        "规则：中音区直接写数字 1-7；高音区在数字后加单引号，例如 1'；"
+        "你是笛子简谱（数字谱）识别助手。任务：只把图片里的简谱转写成纯文本数字谱。"
+        "除简谱本身以外的内容一律完全忽略、一个字都不要输出，包括但不限于："
+        "歌词与歌词文字、曲名标题、作者/编曲/演唱/制谱者、调号与拍号的说明文字、页码、"
+        "水印、二维码、印章、logo、指法与演奏提示文字、五线谱及五线谱上的音符与谱号、"
+        "和弦记号、速度/力度/表情记号（如 ♩=90、D.C.、ff）、乐器与段落说明、"
+        "背景图案、页边批注与手写笔记。"
+        "简谱行里的非音符符号也要忽略：小节线、反复记号、跳房子记号、连音线、"
+        "换气记号、装饰音标记。"
+        "记法规则：中音区直接写数字 1-7；高音区在数字后加单引号，例如 1'；"
         "低音区在数字后加逗号，例如 6,；减号 - 表示延音线，延长前面一个音一拍；"
         "0 表示休止符；# 表示升号、b 表示降号，写在数字前面。"
-        "每行简谱输出为一行，音符之间用一个空格分隔。");
+        "输出格式：每行简谱输出为一行，音符之间用一个空格分隔；"
+        "只输出这些记法本身，不要解释、不要表格、不要标点、不要 Markdown 代码块。");
 
 struct WorkerResult {
     QStringList notations;
@@ -78,12 +89,10 @@ bool runRecognition(const dizi::AppConfig &config, const QStringList &paths, Wor
     return true;
 }
 
-bool renderPdf(const QString &outputPath, const dizi::Score &score, dizi::PdfRenderer &renderer,
-               QString &error) {
-    dizi::ScorePage page;
-    page.caption = QStringLiteral("识别结果");
-    page.notes = score;
-    return renderer.render({page}, outputPath, error);
+QAction *addActionWithIcon(QMenu &menu, const QString &text, const QString &iconPath) {
+    QAction *action = menu.addAction(text);
+    action->setIcon(QIcon(iconPath));
+    return action;
 }
 
 }
@@ -104,14 +113,12 @@ MainWindow::~MainWindow() {
 void MainWindow::connectSignals() {
     connect(ui->generateButton, &QPushButton::clicked, this, &MainWindow::generatePdf);
     connect(ui->settingsButton, &QPushButton::clicked, this, &MainWindow::openSettings);
-    connect(ui->addButton, &QPushButton::clicked, this, &MainWindow::chooseImages);
-    connect(ui->dropArea, &ImageDropWidget::imagesDropped, this, &MainWindow::addImages);
+    connect(ui->importButton, &QPushButton::clicked, this, &MainWindow::chooseImages);
+    connect(ui->addMoreButton, &QPushButton::clicked, this, &MainWindow::chooseImages);
     connect(ui->thumbList, &QListWidget::itemDoubleClicked, this, &MainWindow::openThumbnail);
     connect(ui->thumbList, &QListWidget::customContextMenuRequested, this,
             &MainWindow::showThumbnailMenu);
     connect(&m_watcher, &QFutureWatcher<int>::finished, this, &MainWindow::finishGeneration);
-    ui->thumbList->setContextMenuPolicy(Qt::CustomContextMenu);
-    ui->thumbList->setViewMode(QListView::IconMode);
     auto *shortcut = new QShortcut(QKeySequence::Delete, ui->thumbList);
     connect(shortcut, &QShortcut::activated, this, &MainWindow::removeSelectedItem);
 }
@@ -127,7 +134,7 @@ void MainWindow::loadConfig() {
 
 void MainWindow::refreshPages() {
     const bool empty = m_imagePaths.isEmpty();
-    ui->mainStack->setCurrentWidget(empty ? ui->dropPage : ui->listPage);
+    ui->mainStack->setCurrentWidget(empty ? ui->emptyPage : ui->listPage);
     ui->generateButton->setEnabled(!empty);
     if (!empty) {
         ui->statusLabel->setText(
@@ -225,7 +232,8 @@ void MainWindow::showThumbnailMenu(const QPoint &position) {
     }
     ui->thumbList->setCurrentItem(item);
     QMenu menu(this);
-    QAction *cropAction = menu.addAction(QStringLiteral("裁剪"));
+    QAction *cropAction = addActionWithIcon(menu, QStringLiteral("裁剪"),
+                                            QStringLiteral(":/edit.png"));
     QAction *removeAction = menu.addAction(QStringLiteral("删除"));
     const QAction *chosen = menu.exec(ui->thumbList->viewport()->mapToGlobal(position));
     if (chosen == cropAction) {
@@ -248,7 +256,7 @@ void MainWindow::openSettings() {
 
 void MainWindow::generatePdf() {
     if (m_imagePaths.isEmpty()) {
-        showError(QStringLiteral("请先拖入至少一张简谱图片。"));
+        showError(QStringLiteral("请先导入至少一张简谱图片。"));
         return;
     }
     loadConfig();
@@ -261,7 +269,6 @@ void MainWindow::generatePdf() {
 
 void MainWindow::startRecognition() {
     ui->generateButton->setEnabled(false);
-    ui->mainStack->setCurrentWidget(ui->busyPage);
     ui->progressBar->setRange(0, 0);
     ui->statusLabel->setText(QStringLiteral("正在识别 %1 张图片…").arg(m_imagePaths.size()));
     const QStringList paths = m_imagePaths;
@@ -299,12 +306,27 @@ void MainWindow::finishGeneration() {
     ui->generateButton->setEnabled(!m_imagePaths.isEmpty());
     ui->progressBar->setRange(0, 100);
     ui->progressBar->setValue(0);
-    ui->mainStack->setCurrentWidget(m_imagePaths.isEmpty() ? ui->dropPage : ui->listPage);
     if (m_outcome.error.has_value()) {
         showError(*m_outcome.error);
         return;
     }
     importNotations(m_outcome.notations);
+}
+
+QString MainWindow::choosePdfOutputPath() const {
+    const QString suggested = m_imagePaths.isEmpty()
+                                      ? path_util::defaultOutputPdfPath(QString())
+                                      : path_util::defaultOutputPdfPath(m_imagePaths.first());
+    const QString chosen = QFileDialog::getSaveFileName(
+            const_cast<MainWindow *>(this), QStringLiteral("保存 PDF"), suggested,
+            QStringLiteral("PDF 文件 (*.pdf)"));
+    if (chosen.isEmpty()) {
+        return QString();
+    }
+    if (path_util::isPdfPath(chosen)) {
+        return chosen;
+    }
+    return chosen + QStringLiteral(".pdf");
 }
 
 void MainWindow::reportWarnings(const QStringList &failures) {
@@ -319,31 +341,44 @@ void MainWindow::reportWarnings(const QStringList &failures) {
                                      .arg(details));
 }
 
-void MainWindow::importNotations(const QStringList &notations) {
-    m_pendingScore.clear();
-    QStringList failures;
+std::vector<dizi::Score> MainWindow::buildScores(const QStringList &notations,
+                                                 QStringList &failures) const {
+    std::vector<dizi::Score> scores;
     for (int index = 0; index < notations.size(); ++index) {
         dizi::Score parsed;
-        if (!m_pipeline.parse(notations.at(index).toStdString(), parsed)) {
+        dizi::ScorePipeline pipeline;
+        if (!pipeline.parse(notations.at(index).toStdString(), parsed)) {
             failures.append(QStringLiteral("第 %1 张：%2")
                                     .arg(index + 1)
-                                    .arg(QString::fromStdString(m_pipeline.error())));
+                                    .arg(QString::fromStdString(pipeline.error())));
             continue;
         }
-        m_pendingScore.insert(m_pendingScore.end(), parsed.begin(), parsed.end());
+        scores.push_back(parsed);
     }
-    if (m_pendingScore.empty()) {
-        const QString details = failures.mid(0, kMaxErrorLines).join(QStringLiteral("\n"));
-        showError(QStringLiteral("识别结果无法解析为简谱记法。\n%1").arg(details));
+    return scores;
+}
+
+void MainWindow::importNotations(const QStringList &notations) {
+    QStringList failures;
+    const std::vector<dizi::Score> scores = buildScores(notations, failures);
+    if (scores.empty()) {
+        showError(QStringLiteral("识别结果无法解析为简谱记法。\n%1")
+                          .arg(failures.mid(0, kMaxErrorLines).join(QStringLiteral("\n"))));
         return;
     }
-    const QString outputPath = path_util::defaultOutputPdfPath(m_imagePaths.first());
+    const QString outputPath = choosePdfOutputPath();
+    if (outputPath.isEmpty()) {
+        ui->statusLabel->setText(QStringLiteral("已取消保存"));
+        return;
+    }
     QString error;
-    if (!renderPdf(outputPath, m_pendingScore, m_renderer, error)) {
+    if (!m_renderer.render(scores, outputPath, error)) {
         showError(error);
         return;
     }
-    ui->statusLabel->setText(QStringLiteral("已生成 %1").arg(path_util::describe(outputPath)));
+    ui->statusLabel->setText(QStringLiteral("已生成 %1（%2 张简谱）")
+                                     .arg(path_util::describe(outputPath))
+                                     .arg(scores.size()));
     QDesktopServices::openUrl(QUrl::fromLocalFile(outputPath));
     reportWarnings(failures);
 }

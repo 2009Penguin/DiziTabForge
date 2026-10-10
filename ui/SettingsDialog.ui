@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>SettingsDialog</class>
  <widget class="QDialog" name="SettingsDialog">
@@ -36,32 +36,15 @@
     <number>20</number>
    </property>
    <item>
-    <widget class="QLabel" name="headingLabel">
-     <property name="text">
-      <string>GLM-4.6V-Flash 接口设置</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="hintLabel">
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
-     <property name="text">
-      <string>填写智谱开放平台的 API Key 后保存，配置会写入程序同级的 config.json。</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <layout class="QFormLayout" name="formLayout">
+     <property name="labelAlignment">
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+     </property>
      <property name="horizontalSpacing">
       <number>14</number>
      </property>
      <property name="verticalSpacing">
       <number>12</number>
-     </property>
-     <property name="labelAlignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
      <item row="0" column="0">
       <widget class="QLabel" name="apiKeyTitle">
@@ -73,10 +56,10 @@
      <item row="0" column="1">
       <widget class="QLineEdit" name="apiKeyEdit">
        <property name="echoMode">
-        <enum>QLineEdit::Password</enum>
+        <enum>QLineEdit::EchoMode::Password</enum>
        </property>
        <property name="placeholderText">
-        <string>粘贴智谱 API Key</string>
+        <string>粘贴模型 API Key</string>
        </property>
       </widget>
      </item>
@@ -90,7 +73,7 @@
      <item row="1" column="1">
       <widget class="QLineEdit" name="endpointEdit">
        <property name="placeholderText">
-        <string>https://open.bigmodel.cn/api/paas/v4/chat/completions</string>
+        <string>粘贴模型接口地址</string>
        </property>
       </widget>
      </item>
@@ -104,7 +87,7 @@
      <item row="2" column="1">
       <widget class="QLineEdit" name="modelEdit">
        <property name="placeholderText">
-        <string>glm-4.6v-flash</string>
+        <string>粘贴模型名称</string>
        </property>
       </widget>
      </item>
@@ -131,19 +114,12 @@
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="pathLabel">
-     <property name="text">
-      <string>config.json</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QLabel" name="statusLabel">
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
      <property name="text">
       <string/>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -155,7 +131,7 @@
      <item>
       <spacer name="buttonSpacer">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -187,4 +163,5 @@
   </layout>
  </widget>
  <resources/>
+ <connections/>
 </ui>

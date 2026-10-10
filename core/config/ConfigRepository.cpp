@@ -20,8 +20,8 @@ QString ConfigRepository::filePath() const {
 
 AppConfig ConfigRepository::defaults() {
     AppConfig config;
-    config.endpoint = QStringLiteral("https://open.bigmodel.cn/api/paas/v4/chat/completions");
-    config.model = QStringLiteral("glm-4.6v-flash");
+    config.endpoint = QStringLiteral("https://api-inference.modelscope.cn/v1");
+    config.model = QStringLiteral("Qwen/Qwen3-VL-8B-Instruct");
     return config;
 }
 

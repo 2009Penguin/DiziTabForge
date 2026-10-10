@@ -39,8 +39,8 @@ Fingering makeFingering(const PatternRow &row, const Note &note) {
     fingering.pitchName = row.pitchName;
     fingering.overblown = note.octave != 0;
     for (int index = 0; index < kHoleCount; ++index) {
-        fingering.holes.at(static_cast<std::size_t>(index)) =
-                row.holes.at(static_cast<std::size_t>(index)) != 0;
+        const std::size_t slot = static_cast<std::size_t>(index);
+        fingering.holes.at(slot) = row.holes.at(slot) != 0 ? HoleState::Covered : HoleState::Open;
     }
     return fingering;
 }
@@ -49,6 +49,7 @@ Fingering unknownFingering(const Note &note) {
     Fingering fingering;
     fingering.pitchName = "?";
     fingering.overblown = note.octave >= 1;
+    fingering.playable = false;
     return fingering;
 }
 
@@ -63,6 +64,9 @@ const std::string &FingerTable::keyName() const {
 }
 
 Fingering FingerTable::lookup(const Note &note) const {
+    if (note.rest) {
+        return unknownFingering(note);
+    }
     for (const PatternRow &row : patternTable()) {
         if (matches(row, note)) {
             return makeFingering(row, note);

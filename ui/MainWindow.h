@@ -10,7 +10,6 @@
 
 #include "core/config/ConfigRepository.h"
 #include "core/model/Note.h"
-#include "core/parse/ScorePipeline.h"
 #include "core/render/PdfRenderer.h"
 
 class QPoint;
@@ -68,6 +67,11 @@ private:
 
     void reportWarnings(const QStringList &failures);
 
+    QString choosePdfOutputPath() const;
+
+    std::vector<dizi::Score> buildScores(const QStringList &notations,
+                                         QStringList &failures) const;
+
     void addThumbnail(const QString &path);
 
     void updateThumbnail(int index);
@@ -79,8 +83,6 @@ private:
     Ui::MainWindow *ui = nullptr;
     dizi::AppConfig m_config;
     QStringList m_imagePaths;
-    dizi::Score m_pendingScore;
-    dizi::ScorePipeline m_pipeline;
     dizi::PdfRenderer m_renderer;
     QFutureWatcher<int> m_watcher;
     RecognitionOutcome m_outcome;

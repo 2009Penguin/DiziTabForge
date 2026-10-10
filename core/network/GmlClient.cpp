@@ -3,8 +3,14 @@
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
+#include <QDebug>
+
+#include <chrono>
 #include <memory>
 #include <string>
+#include <thread>
+
+#include "core/util/PathUtil.h"
 
 using namespace nlohmann;
 
@@ -13,10 +19,15 @@ namespace dizi {
 struct GmlClient::ResponseSink {
     QByteArray body;
     long httpStatus = 0;
+    QString retryAfter;
     GmlClient::ProgressCallback progress;
 };
 
 namespace {
+
+constexpr int kMaxAttempts = 3;
+constexpr int kFirstRetryDelaySeconds = 2;
+constexpr int kMaxRetryDelaySeconds = 90;
 
 using CurlHandle = std::unique_ptr<CURL, decltype(&curl_easy_cleanup)>;
 using CurlHeaders = std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)>;
@@ -24,6 +35,16 @@ using CurlHeaders = std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)>;
 size_t collectBody(char *data, size_t size, size_t count, void *userData) {
     auto *sink = static_cast<GmlClient::ResponseSink *>(userData);
     sink->body.append(data, static_cast<int>(size * count));
+    return size * count;
+}
+
+size_t collectHeader(char *data, size_t size, size_t count, void *userData) {
+    auto *sink = static_cast<GmlClient::ResponseSink *>(userData);
+    const QByteArray line(data, static_cast<int>(size * count));
+    const QByteArray name = QByteArrayLiteral("retry-after:");
+    if (line.left(name.size()).toLower() == name) {
+        sink->retryAfter = QString::fromLatin1(line.mid(name.size())).trimmed();
+    }
     return size * count;
 }
 
@@ -36,6 +57,15 @@ int reportProgress(void *userData, curl_off_t downloadTotal, curl_off_t download
     const auto total = static_cast<qint64>(uploadTotal + downloadTotal);
     const auto done = static_cast<qint64>(uploadNow + downloadNow);
     sink->progress(done, total);
+    return 0;
+}
+
+int retryDelaySeconds(const GmlClient::ResponseSink &sink) {
+    bool valid = false;
+    const int reported = sink.retryAfter.toInt(&valid);
+    if (valid && reported > 0) {
+        return reported < kMaxRetryDelaySeconds ? reported : kMaxRetryDelaySeconds;
+    }
     return 0;
 }
 
@@ -59,12 +89,15 @@ QString buildAuthHeader(const QString &apiKey) {
 
 void applyCommonOptions(CURL *handle, const GmlRequest &request, GmlClient::ResponseSink &sink,
                         const std::string &payload) {
-    curl_easy_setopt(handle, CURLOPT_URL, request.endpoint.toUtf8().constData());
+    const QByteArray url = path_util::normalizeChatEndpoint(request.endpoint).toUtf8();
+    curl_easy_setopt(handle, CURLOPT_URL, url.constData());
     curl_easy_setopt(handle, CURLOPT_POST, 1L);
     curl_easy_setopt(handle, CURLOPT_POSTFIELDS, payload.c_str());
     curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, static_cast<long>(payload.size()));
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, &collectBody);
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, &sink);
+    curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, &collectHeader);
+    curl_easy_setopt(handle, CURLOPT_HEADERDATA, &sink);
     curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 20L);
     curl_easy_setopt(handle, CURLOPT_TIMEOUT, static_cast<long>(request.timeoutSeconds));
     curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
@@ -133,7 +166,8 @@ QString describeHttpFailure(const GmlClient::ResponseSink &sink) {
         return QStringLiteral("HTTP %1: the API Key was rejected.").arg(sink.httpStatus);
     }
     if (sink.httpStatus == 429) {
-        return QStringLiteral("HTTP 429: the free model is rate limited, retry later.");
+        return QStringLiteral("HTTP 429: the free model is rate limited. It was retried three "
+                              "times and is still busy, so wait a minute and generate again.");
     }
     const QString body = QString::fromUtf8(sink.body.left(400));
     return QStringLiteral("HTTP %1: %2").arg(sink.httpStatus).arg(body);
@@ -182,6 +216,21 @@ GmlResponse GmlClient::send() {
     const std::string payload = buildPayload(m_request).dump();
     ResponseSink sink;
     sink.progress = m_progress;
+    GmlResponse response;
+    for (int attemptIndex = 1; attemptIndex <= kMaxAttempts; ++attemptIndex) {
+        response = attempt(payload, sink);
+        if (!shouldRetry(response, sink)) {
+            return response;
+        }
+        waitBeforeRetry(sink, attemptIndex);
+    }
+    return response;
+}
+
+GmlResponse GmlClient::attempt(const std::string &payload, ResponseSink &sink) {
+    sink.body.clear();
+    sink.httpStatus = 0;
+    sink.retryAfter.clear();
     CurlHandle handle(curl_easy_init(), &curl_easy_cleanup);
     if (!handle) {
         return failure(QStringLiteral("libcurl could not create a session handle."));
@@ -189,29 +238,66 @@ GmlResponse GmlClient::send() {
     const CurlHeaders headers = buildHeaders(m_request);
     curl_easy_setopt(handle.get(), CURLOPT_HTTPHEADER, headers.get());
     applyCommonOptions(handle.get(), m_request, sink, payload);
+    qDebug().noquote() << "[http] POST"
+                       << path_util::normalizeChatEndpoint(m_request.endpoint)
+                       << "\n[http] model =" << m_request.model
+                       << " images =" << m_request.imageDataUris.size()
+                       << " payloadBytes =" << static_cast<qint64>(payload.size())
+                       << " apiKeyChars =" << m_request.apiKey.trimmed().size()
+                       << " timeoutSec =" << m_request.timeoutSeconds;
     const CURLcode result = curl_easy_perform(handle.get());
     curl_easy_getinfo(handle.get(), CURLINFO_RESPONSE_CODE, &sink.httpStatus);
+    qDebug().noquote() << "[http] curlCode =" << static_cast<int>(result)
+                       << curl_easy_strerror(result) << " httpStatus =" << sink.httpStatus
+                       << " responseBytes =" << sink.body.size();
     return buildResult(static_cast<int>(result), sink);
+}
+
+bool GmlClient::shouldRetry(const GmlResponse &response, const ResponseSink &sink) const {
+    if (response.ok) {
+        return false;
+    }
+    return sink.httpStatus == 429 || sink.httpStatus >= 500;
+}
+
+void GmlClient::waitBeforeRetry(const ResponseSink &sink, int attemptIndex) {
+    const int reported = retryDelaySeconds(sink);
+    const int seconds =
+            reported > 0 ? reported : kFirstRetryDelaySeconds * (1 << (attemptIndex - 1));
+    if (m_progress) {
+        m_progress(-1, -1);
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(seconds));
 }
 
 GmlResponse GmlClient::buildResult(int curlCode, ResponseSink &sink) const {
     if (curlCode != CURLE_OK) {
+        qWarning().noquote() << "[http] transport failure:"
+                             << curl_easy_strerror(static_cast<CURLcode>(curlCode));
         return failure(QStringLiteral("Network error: %1")
                                .arg(QString::fromLatin1(curl_easy_strerror(
                                        static_cast<CURLcode>(curlCode)))));
     }
     if (sink.httpStatus < 200 || sink.httpStatus >= 300) {
-        return failure(describeHttpFailure(sink));
+        qWarning().noquote() << "[http] non-2xx body:" << QString::fromUtf8(sink.body.left(500));
+        GmlResponse failed = failure(describeHttpFailure(sink));
+        failed.httpStatus = sink.httpStatus;
+        return failed;
     }
     GmlResponse response;
     response.httpStatus = sink.httpStatus;
     const QString problem = parseResponse(sink, response);
     if (!problem.isEmpty()) {
+        qWarning().noquote() << "[http] response parse problem:" << problem
+                             << "\n[http] body head:"
+                             << QString::fromUtf8(sink.body.left(500));
         response.ok = false;
         response.content.clear();
         response.error = problem;
         return response;
     }
+    qDebug().noquote() << "[http] transcription length =" << response.content.size()
+                       << " chars";
     response.ok = true;
     return response;
 }

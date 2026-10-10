@@ -1,5 +1,7 @@
 #include "core/parse/ScoreTokenizer.h"
 
+#include <QDebug>
+
 #include <cctype>
 #include <utility>
 
@@ -42,11 +44,25 @@ bool ScoreTokenizer::readSymbol(char symbol, std::size_t position, ScoreToken &t
                                 std::string &error) const {
     TokenType type = TokenType::Beat;
     if (!symbolToToken(symbol, type)) {
-        error = "Unexpected character '" + describeSymbol(symbol) + "' at index " +
-                std::to_string(position);
+        error = std::string("Unexpected character '") + describeSymbol(symbol) +
+                "' at index " + std::to_string(position);
         return false;
     }
     target.type = type;
+    target.position = position;
+    target.text = describeSymbol(symbol);
+    target.value = 0;
+    return true;
+}
+
+bool ScoreTokenizer::readRest(char symbol, std::size_t position, ScoreToken &target,
+                              std::string &error) const {
+    if (symbol != '0') {
+        error = std::string("Unexpected character '") + describeSymbol(symbol) +
+                "' at index " + std::to_string(position);
+        return false;
+    }
+    target.type = TokenType::Rest;
     target.position = position;
     target.text = describeSymbol(symbol);
     target.value = 0;
@@ -82,8 +98,13 @@ bool ScoreTokenizer::tokenize(const std::string &text, TokenList &target,
             continue;
         }
         ScoreToken token;
-        if (std::isdigit(static_cast<unsigned char>(symbol)) != 0) {
+        const bool isDigit = std::isdigit(static_cast<unsigned char>(symbol)) != 0;
+        if (isDigit && symbol != '0') {
             if (!readBeat(symbol, position, token, error)) {
+                return false;
+            }
+        } else if (symbol == '0') {
+            if (!readRest(symbol, position, token, error)) {
                 return false;
             }
         } else if (!readSymbol(symbol, position, token, error)) {
@@ -91,6 +112,7 @@ bool ScoreTokenizer::tokenize(const std::string &text, TokenList &target,
         }
         target.push_back(token);
     }
+    qDebug().noquote() << "[tokenizer] symbol count =" << static_cast<int>(target.size());
     return true;
 }
 

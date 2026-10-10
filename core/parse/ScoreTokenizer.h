@@ -17,6 +17,9 @@ private:
 
     bool readBeat(char symbol, std::size_t position, ScoreToken &target,
                   std::string &error) const;
+
+    bool readRest(char symbol, std::size_t position, ScoreToken &target,
+                  std::string &error) const;
 };
 
 }

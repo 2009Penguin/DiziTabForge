@@ -83,13 +83,17 @@ set(DIZI_NETWORK_SOURCES
 set(DIZI_RENDER_SOURCES
         core/render/FingerTable.cpp
         core/render/NoteFormatter.cpp
+        core/render/TrueTypeFace.cpp
+        core/render/CjkFontFile.cpp
         core/render/PdfWriter.cpp
+        core/render/PageCanvas.cpp
+        core/render/QtPdfCanvas.cpp
+        core/render/VectorPdfCanvas.cpp
         core/render/PdfRenderer.cpp)
 
 set(DIZI_UI_SOURCES
         ui/MainWindow.cpp
         ui/MainWindow.ui
-        ui/ImageDropWidget.cpp
         ui/CropDialog.cpp
         ui/CropDialog.ui
         ui/SettingsDialog.cpp
@@ -120,15 +124,21 @@ target_link_libraries(dizi_network PRIVATE dizi_deps)
 
 add_library(dizi_render STATIC ${DIZI_RENDER_SOURCES})
 target_include_directories(dizi_render PUBLIC "${DIZI_ROOT_INCLUDES}")
-target_link_libraries(dizi_render PUBLIC Qt6::Core dizi_model dizi_util dizi_parse)
+target_link_libraries(dizi_render PUBLIC Qt6::Core Qt6::Gui dizi_model dizi_util dizi_parse)
 
 add_library(dizi_ui STATIC ${DIZI_UI_SOURCES})
 target_include_directories(dizi_ui PUBLIC "${DIZI_ROOT_INCLUDES}")
 target_link_libraries(dizi_ui PUBLIC dizi_model dizi_util dizi_config dizi_parse
         dizi_network dizi_render Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network)
 
-add_executable(DiziTabForge main.cpp)
+add_executable(DiziTabForge main.cpp res/res.qrc)
 target_link_libraries(DiziTabForge PRIVATE dizi_ui)
+
+if (WIN32)
+    enable_language(RC)
+    target_sources(DiziTabForge PRIVATE res/app.rc)
+    set_target_properties(DiziTabForge PROPERTIES WIN32_EXECUTABLE OFF)
+endif ()
 
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(DEBUG_SUFFIX)
@@ -152,6 +162,17 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
                     "${QT_INSTALL_PATH}/plugins/platforms/qwindows${DEBUG_SUFFIX}.dll"
                     "$<TARGET_FILE_DIR:DiziTabForge>/plugins/platforms/")
         endif ()
+        add_custom_command(TARGET DiziTabForge POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory
+                "$<TARGET_FILE_DIR:DiziTabForge>/plugins/imageformats/")
+        foreach (QT_IMAGE_PLUGIN jpeg gif webp ico tiff svg)
+            if (EXISTS "${QT_INSTALL_PATH}/plugins/imageformats/q${QT_IMAGE_PLUGIN}${DEBUG_SUFFIX}.dll")
+                add_custom_command(TARGET DiziTabForge POST_BUILD
+                        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "${QT_INSTALL_PATH}/plugins/imageformats/q${QT_IMAGE_PLUGIN}${DEBUG_SUFFIX}.dll"
+                        "$<TARGET_FILE_DIR:DiziTabForge>/plugins/imageformats/")
+            endif ()
+        endforeach ()
         foreach (QT_LIB Core Gui Widgets Network)
             add_custom_command(TARGET DiziTabForge POST_BUILD
                     COMMAND ${CMAKE_COMMAND} -E copy_if_different

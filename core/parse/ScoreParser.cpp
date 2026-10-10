@@ -1,22 +1,90 @@
 #include "core/parse/ScoreParser.h"
 
+#include <QDebug>
+
+#include <algorithm>
+
 namespace dizi {
 
 namespace {
 
-constexpr int kNoAccidental = 0;
 constexpr int kSharpSign = 1;
 constexpr int kFlatSign = -1;
+constexpr char kSpace = ' ';
 
-bool isMarker(TokenType type) {
-    return type == TokenType::Sharp || type == TokenType::Flat ||
-           type == TokenType::OctaveUp || type == TokenType::OctaveDown;
+std::string escapeControl(char symbol) {
+    if (symbol == '\n') {
+        return "\\n";
+    }
+    if (symbol == '\r') {
+        return "\\r";
+    }
+    if (symbol == '\t') {
+        return "\\t";
+    }
+    return std::string(1, symbol);
 }
 
-void dropTrailingMarkers(TokenList &resolved) {
-    while (!resolved.empty() && isMarker(resolved.back().type)) {
-        resolved.pop_back();
+std::string markerName(TokenType type) {
+    switch (type) {
+        case TokenType::Sharp:
+            return "'#' (sharp)";
+        case TokenType::Flat:
+            return "'b' (flat)";
+        case TokenType::OctaveUp:
+            return "''' (high octave)";
+        case TokenType::OctaveDown:
+            return "',' (low octave)";
+        case TokenType::Hold:
+            return "'-' (hold)";
+        case TokenType::Rest:
+            return "'0' (rest)";
+        case TokenType::Beat:
+            return "a digit";
     }
+    return "token";
+}
+
+std::string describeTokens(const TokenList &tokens, std::size_t upto) {
+    std::string text;
+    for (std::size_t index = 0; index < tokens.size(); ++index) {
+        if (index > 0) {
+            text += kSpace;
+        }
+        if (index == upto) {
+            text += ">>>";
+        }
+        text += tokens[index].text;
+        if (index == upto) {
+            text += "<<<";
+        }
+    }
+    return text;
+}
+
+std::string excerptAround(const std::string &notation, std::size_t position, std::size_t *column) {
+    if (notation.empty()) {
+        return std::string();
+    }
+    const std::size_t at = position < notation.size() ? position : notation.size() - 1;
+    const std::size_t start = at > 24 ? at - 24 : 0;
+    const std::size_t stop = std::min(notation.size(), at + 25);
+    std::string excerpt;
+    *column = 0;
+    for (std::size_t index = start; index < stop; ++index) {
+        if (index == at) {
+            *column = excerpt.size();
+        }
+        excerpt += escapeControl(notation[index]);
+    }
+    if (start > 0) {
+        excerpt = "..." + excerpt;
+        *column += 3;
+    }
+    if (stop < notation.size()) {
+        excerpt += "...";
+    }
+    return excerpt;
 }
 
 }
@@ -26,116 +94,146 @@ const std::string &ScoreParser::error() const {
 }
 
 bool ScoreParser::fail(const ScoreToken &token, const std::string &reason) {
-    m_error = reason + " (near index " + std::to_string(token.position) + ")";
+    const std::string offending =
+            token.text.empty() ? std::string("(no text)") : escapeControl(token.text.at(0));
+    std::string detail = reason + ": found " + markerName(token.type) + " as '" + offending +
+                         "' at index " + std::to_string(token.position);
+    std::size_t column = 0;
+    const std::string excerpt = excerptAround(m_notation, token.position, &column);
+    if (!excerpt.empty()) {
+        detail += "\n  ..." + excerpt + "\n  ";
+        detail += std::string(column, kSpace) + "^";
+    }
+    detail += "\n  parsed so far: " + describeTokens(m_tokenList, m_tokenIndex);
+    m_error = detail;
+    qWarning().noquote() << "[parse] failed:" << QString::fromStdString(detail);
     return false;
 }
 
-bool ScoreParser::update(const ScoreToken &token, Modifiers &modifiers, TokenList &resolved) {
-    struct Route {
-        TokenType type;
-        Handler handler;
-    };
-    static const Route routes[] = {
-            {TokenType::Beat, &ScoreParser::applyBeat},
-            {TokenType::Hold, &ScoreParser::applyHold},
-            {TokenType::Rest, &ScoreParser::applyRest},
-            {TokenType::Sharp, &ScoreParser::applyAccidental},
-            {TokenType::Flat, &ScoreParser::applyAccidental},
-            {TokenType::OctaveUp, &ScoreParser::applyOctave},
-            {TokenType::OctaveDown, &ScoreParser::applyOctave},
-    };
-    for (const Route &route : routes) {
-        if (route.type == token.type) {
-            return (this->*route.handler)(token, modifiers, resolved);
+bool ScoreParser::flushPending(TokenList &resolved) {
+    if (!m_beatOpen) {
+        return true;
+    }
+    if (!m_lastComplete) {
+        return fail(m_last, "An accidental or octave mark must be followed by a note digit");
+    }
+    resolved.push_back(m_last);
+    m_beatOpen = false;
+    m_noteComplete = true;
+    return true;
+}
+
+bool ScoreParser::close(TokenList &resolved) {
+    const bool ok = flushPending(resolved);
+    m_beatOpen = false;
+    return ok;
+}
+
+bool ScoreParser::onBeat(const ScoreToken &token, TokenList &resolved) {
+    if (!close(resolved)) {
+        return false;
+    }
+    m_last = token;
+    m_last.accidental = m_pendingAccidental;
+    m_pendingAccidental = 0;
+    m_beatOpen = true;
+    m_beatAllowed = false;
+    m_noteComplete = true;
+    m_lastComplete = true;
+    m_octave = 0;
+    return true;
+}
+
+bool ScoreParser::onModifier(const ScoreToken &token, TokenList &resolved) {
+    (void) resolved;
+    const bool isAccidental = token.type == TokenType::Sharp || token.type == TokenType::Flat;
+    if (isAccidental && !m_beatOpen) {
+        if (!m_beatAllowed) {
+            return fail(token, "An accidental must precede a note digit");
         }
+        m_pendingAccidental = token.type == TokenType::Sharp ? kSharpSign : kFlatSign;
+        return true;
+    }
+    if (!m_beatOpen) {
+        return fail(token, "An accidental or octave mark must follow a note digit");
+    }
+    const int step = token.type == TokenType::OctaveUp ? 1 : -1;
+    if (m_octave + step > 1 || m_octave + step < -1) {
+        return fail(token, "Only one octave mark is supported on each side of the digit");
+    }
+    m_octave += step;
+    m_last.octave = m_octave;
+    m_noteComplete = true;
+    m_lastComplete = true;
+    return true;
+}
+
+bool ScoreParser::onHold(const ScoreToken &token, TokenList &resolved) {
+    if (!m_noteComplete) {
+        return fail(token, "A hold mark must directly follow a note digit");
+    }
+    if (!flushPending(resolved)) {
+        return false;
+    }
+    resolved.push_back(token);
+    m_beatAllowed = true;
+    return true;
+}
+
+bool ScoreParser::onRest(const ScoreToken &token, TokenList &resolved) {
+    if (!close(resolved)) {
+        return false;
+    }
+    ScoreToken rest = token;
+    rest.type = TokenType::Rest;
+    resolved.push_back(rest);
+    m_noteComplete = false;
+    m_beatAllowed = true;
+    return true;
+}
+
+bool ScoreParser::update(const ScoreToken &token, TokenList &resolved) {
+    switch (token.type) {
+        case TokenType::Beat:
+            return onBeat(token, resolved);
+        case TokenType::Sharp:
+        case TokenType::Flat:
+        case TokenType::OctaveUp:
+        case TokenType::OctaveDown:
+            return onModifier(token, resolved);
+        case TokenType::Hold:
+            return onHold(token, resolved);
+        case TokenType::Rest:
+            return onRest(token, resolved);
     }
     return fail(token, "Unsupported notation token");
 }
 
-bool ScoreParser::applyBeat(const ScoreToken &token, Modifiers &modifiers,
-                            TokenList &resolved) {
-    dropTrailingMarkers(resolved);
-    resolved.push_back(token);
-    if (modifiers.accidental != kNoAccidental) {
-        ScoreToken accidental;
-        accidental.type = modifiers.accidental > 0 ? TokenType::Sharp : TokenType::Flat;
-        accidental.position = token.position;
-        resolved.push_back(accidental);
-    }
-    for (int step = 0; step < modifiers.octave; ++step) {
-        ScoreToken octave;
-        octave.type = TokenType::OctaveUp;
-        octave.position = token.position;
-        resolved.push_back(octave);
-    }
-    for (int step = 0; step > modifiers.octave; --step) {
-        ScoreToken octave;
-        octave.type = TokenType::OctaveDown;
-        octave.position = token.position;
-        resolved.push_back(octave);
-    }
-    modifiers = Modifiers();
-    return true;
-}
-
-bool ScoreParser::applyHold(const ScoreToken &token, Modifiers &modifiers,
-                            TokenList &resolved) {
-    if (modifiers.accidental != kNoAccidental || modifiers.octave != 0) {
-        return fail(token, "A hold mark cannot follow an accidental or octave mark");
-    }
-    if (resolved.empty() || isMarker(resolved.back().type)) {
-        return fail(token, "A hold mark must follow a note");
-    }
-    if (resolved.back().type == TokenType::Rest) {
-        return fail(token, "A hold mark cannot extend a rest");
-    }
-    resolved.push_back(token);
-    return true;
-}
-
-bool ScoreParser::applyRest(const ScoreToken &token, Modifiers &modifiers,
-                            TokenList &resolved) {
-    modifiers = Modifiers();
-    dropTrailingMarkers(resolved);
-    ScoreToken rest = token;
-    rest.type = TokenType::Rest;
-    rest.value = 1;
-    resolved.push_back(rest);
-    return true;
-}
-
-bool ScoreParser::applyAccidental(const ScoreToken &token, Modifiers &modifiers,
-                                  TokenList &resolved) {
-    (void) resolved;
-    modifiers.accidental = token.type == TokenType::Sharp ? kSharpSign : kFlatSign;
-    return true;
-}
-
-bool ScoreParser::applyOctave(const ScoreToken &token, Modifiers &modifiers,
-                              TokenList &resolved) {
-    (void) resolved;
-    const int step = token.type == TokenType::OctaveUp ? 1 : -1;
-    modifiers.octave += step;
-    if (modifiers.octave > 2 || modifiers.octave < -2) {
-        return fail(token, "An octave mark must stay within two marks of the note");
-    }
-    return true;
-}
-
-bool ScoreParser::combine(const TokenList &input, TokenList &resolved) {
-    Modifiers modifiers;
-    for (const ScoreToken &token : input) {
-        if (!update(token, modifiers, resolved)) {
+bool ScoreParser::parse(const TokenList &input, TokenList &resolved,
+                        const std::string &notation) {
+    m_error.clear();
+    resolved.clear();
+    m_notation = notation;
+    m_tokenList = input;
+    m_beatOpen = false;
+    m_beatAllowed = true;
+    m_noteComplete = false;
+    m_lastComplete = false;
+    m_octave = 0;
+    m_pendingAccidental = 0;
+    qWarning().noquote() << "[parse] input symbols ="
+                         << QString::fromStdString(describeTokens(input, input.size()));
+    for (m_tokenIndex = 0; m_tokenIndex < input.size(); ++m_tokenIndex) {
+        if (!update(input[m_tokenIndex], resolved)) {
             return false;
         }
     }
+    if (!close(resolved)) {
+        return false;
+    }
+    qWarning().noquote() << "[parse] next-note stream ="
+                         << QString::fromStdString(describeTokens(resolved, resolved.size()));
     return true;
-}
-
-bool ScoreParser::parse(const TokenList &input, TokenList &resolved) {
-    m_error.clear();
-    resolved.clear();
-    return combine(input, resolved);
 }
 
 }

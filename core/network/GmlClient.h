@@ -4,6 +4,7 @@
 #include <QString>
 #include <QStringList>
 #include <functional>
+#include <string>
 
 namespace dizi {
 
@@ -37,6 +38,12 @@ public:
 
 private:
     GmlResponse prepare() const;
+
+    GmlResponse attempt(const std::string &payload, ResponseSink &sink);
+
+    bool shouldRetry(const GmlResponse &response, const ResponseSink &sink) const;
+
+    void waitBeforeRetry(const ResponseSink &sink, int attemptIndex);
 
     GmlResponse buildResult(int curlCode, ResponseSink &sink) const;
 
