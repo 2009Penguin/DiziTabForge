@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>SettingsDialog</class>
  <widget class="QDialog" name="SettingsDialog">
@@ -18,70 +18,6 @@
   </property>
   <property name="windowTitle">
    <string>设置</string>
-  </property>
-  <property name="styleSheet">
-   <string notr="true">QDialog {
-    background-color: #11161f;
-}
-QLabel {
-    color: #cfd8e3;
-    font-size: 13px;
-}
-QLabel#headingLabel {
-    color: #e8eaed;
-    font-size: 15px;
-    font-weight: bold;
-}
-QLabel#hintLabel {
-    color: #93a1b5;
-    font-size: 12px;
-}
-QLabel#pathLabel {
-    color: #7f8da3;
-    font-size: 11px;
-}
-QLabel#statusLabel {
-    color: #ff8a65;
-    font-size: 12px;
-    min-height: 28px;
-}
-QLineEdit {
-    color: #e8eaed;
-    background-color: #0b0f16;
-    border: 1px solid #2c3648;
-    border-radius: 8px;
-    padding: 7px 10px;
-    selection-background-color: #3a8760;
-}
-QLineEdit:focus {
-    border: 1px solid #3d8c63;
-}
-QSpinBox {
-    color: #e8eaed;
-    background-color: #0b0f16;
-    border: 1px solid #2c3648;
-    border-radius: 8px;
-    padding: 6px 8px;
-}
-QPushButton {
-    color: #e8eaed;
-    background-color: #232d3d;
-    border: 1px solid #36435a;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 13px;
-}
-QPushButton:hover {
-    background-color: #2c3850;
-}
-QPushButton#saveButton {
-    background-color: #2f6f4f;
-    border-color: #3d8c63;
-    font-weight: bold;
-}
-QPushButton#saveButton:hover {
-    background-color: #3a8760;
-}</string>
   </property>
   <layout class="QVBoxLayout" name="rootLayout">
    <property name="spacing">

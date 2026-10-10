@@ -1,8 +1,8 @@
-#include "ui/CropDialog.h"
+﻿#include "ui/CropDialog.h"
 
 #include "ui_CropDialog.h"
 
-#include <QColor>
+#include <QPalette>
 #include <QDialog>
 #include <QEvent>
 #include <QMouseEvent>
@@ -99,7 +99,7 @@ void CropDialog::refreshPreview() {
     const QRect selection = selectionInWidget();
     if (!selection.isEmpty()) {
         QPainter painter(&canvas);
-        painter.setPen(QPen(QColor("#ff7043"), 2));
+        painter.setPen(QPen(palette().color(QPalette::Highlight), 2));
         painter.drawRect(selection.adjusted(0, 0, -1, -1));
         painter.end();
     }

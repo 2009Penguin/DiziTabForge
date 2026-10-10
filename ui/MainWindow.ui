@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
@@ -24,160 +24,6 @@
   </property>
   <property name="windowTitle">
    <string>笛子简谱 → 手势谱 PDF</string>
-  </property>
-  <property name="styleSheet">
-   <string notr="true">QMainWindow {
-    background-color: #0f141c;
-}
-QWidget#centralWidget {
-    background-color: #0f141c;
-}
-QWidget#dropPage {
-    background-color: #0f141c;
-}
-QWidget#listPage {
-    background-color: #0f141c;
-}
-QWidget#busyPage {
-    background-color: #0f141c;
-}
-QLabel#titleLabel {
-    color: #e8eaed;
-    font-size: 22px;
-    font-weight: bold;
-}
-QLabel#subtitleLabel {
-    color: #93a1b5;
-    font-size: 12px;
-}
-QLabel#busyTitleLabel {
-    color: #e8eaed;
-    font-size: 18px;
-    font-weight: bold;
-}
-QLabel#pageTitleLabel {
-    color: #e8eaed;
-    font-size: 13px;
-    font-weight: bold;
-}
-QLabel#pageHintLabel {
-    color: #93a1b5;
-    font-size: 12px;
-}
-QLabel#dropGlyphLabel {
-    color: #3d8c63;
-    font-size: 44px;
-    font-weight: bold;
-}
-QLabel#dropTitleLabel {
-    color: #e8eaed;
-    font-size: 18px;
-    font-weight: bold;
-}
-QLabel#dropHintLabel {
-    color: #93a1b5;
-    font-size: 12px;
-}
-QLabel#busyHintLabel {
-    color: #93a1b5;
-    font-size: 12px;
-}
-QLabel#statusLabel {
-    color: #a9b6c8;
-    font-size: 12px;
-}
-QPushButton {
-    color: #e8eaed;
-    background-color: #232d3d;
-    border: 1px solid #36435a;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 13px;
-}
-QPushButton:hover {
-    background-color: #2c3850;
-}
-QPushButton:pressed {
-    background-color: #1b2330;
-}
-QPushButton:disabled {
-    color: #6b7788;
-    background-color: #1a212c;
-    border-color: #262f3e;
-}
-QPushButton#generateButton {
-    background-color: #2f6f4f;
-    border-color: #3d8c63;
-    font-weight: bold;
-}
-QPushButton#generateButton:hover {
-    background-color: #3a8760;
-}
-QPushButton#settingsButton {
-    background-color: #1b2330;
-    border-color: #2c3648;
-}
-QPushButton#settingsButton:hover {
-    background-color: #263143;
-}
-QWidget#dropArea {
-    background-color: #131a25;
-    border: 2px dashed #384358;
-    border-radius: 14px;
-}
-QWidget#dropArea[dropActive="true"] {
-    background-color: #17273a;
-    border: 2px solid #3d8c63;
-}
-QListWidget#thumbList {
-    background-color: #0b0f16;
-    border: 1px solid #232d3d;
-    border-radius: 12px;
-    padding: 8px;
-    outline: none;
-}
-QListWidget#thumbList::item {
-    color: #cfd8e3;
-    background-color: #161e2a;
-    border: 1px solid #232d3d;
-    border-radius: 10px;
-    margin: 6px;
-    padding: 8px;
-}
-QListWidget#thumbList::item:hover {
-    border: 1px solid #3d8c63;
-    background-color: #1b2634;
-}
-QListWidget#thumbList::item:selected {
-    border: 1px solid #3d8c63;
-    background-color: #1f3346;
-    color: #ffffff;
-}
-QProgressBar#progressBar {
-    background-color: #131a25;
-    border: 1px solid #232d3d;
-    border-radius: 6px;
-    height: 12px;
-    text-align: center;
-    color: transparent;
-}
-QProgressBar#progressBar::chunk {
-    background-color: #3d8c63;
-    border-radius: 5px;
-}
-QMenu {
-    color: #e8eaed;
-    background-color: #161e2a;
-    border: 1px solid #2c3648;
-    padding: 6px;
-}
-QMenu::item {
-    padding: 6px 22px;
-    border-radius: 6px;
-}
-QMenu::item:selected {
-    background-color: #2c3850;
-}</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="rootLayout">
@@ -248,7 +94,7 @@ QMenu::item:selected {
          <string>设置 API Key</string>
         </property>
         <property name="text">
-         <string>⚙ 设置</string>
+         <string>设置</string>
         </property>
        </widget>
       </item>
@@ -298,7 +144,7 @@ QMenu::item:selected {
               <set>Qt::AlignCenter</set>
              </property>
              <property name="text">
-              <string>⬇</string>
+              <string></string>
              </property>
             </widget>
            </item>

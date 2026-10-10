@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>CropDialog</class>
  <widget class="QDialog" name="CropDialog">
@@ -18,68 +18,6 @@
   </property>
   <property name="windowTitle">
    <string>裁剪简谱图片</string>
-  </property>
-  <property name="styleSheet">
-   <string notr="true">QDialog {
-    background-color: #11161f;
-}
-QLabel#titleLabel {
-    color: #e8eaed;
-    font-size: 14px;
-    font-weight: bold;
-}
-QLabel#imageLabel {
-    background-color: #0b0f16;
-    border: 2px dashed #384358;
-    border-radius: 10px;
-}
-QLabel#hintLabel {
-    color: #93a1b5;
-    font-size: 12px;
-}
-QLabel#sizeLabel {
-    color: #cfd8e3;
-    background-color: #1b2330;
-    border: 1px solid #2c3648;
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 12px;
-}
-QLabel#selectionLabel {
-    color: #ffb08a;
-    background-color: #1b2330;
-    border: 1px solid #2c3648;
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 12px;
-}
-QLabel#statusLabel {
-    color: #ff8a65;
-    font-size: 12px;
-    min-height: 32px;
-}
-QPushButton {
-    color: #e8eaed;
-    background-color: #232d3d;
-    border: 1px solid #36435a;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 13px;
-}
-QPushButton:hover {
-    background-color: #2c3850;
-}
-QPushButton:pressed {
-    background-color: #1b2330;
-}
-QPushButton#cropButton {
-    background-color: #2f6f4f;
-    border-color: #3d8c63;
-    font-weight: bold;
-}
-QPushButton#cropButton:hover {
-    background-color: #3a8760;
-}</string>
   </property>
   <layout class="QHBoxLayout" name="mainLayout">
    <property name="spacing">
