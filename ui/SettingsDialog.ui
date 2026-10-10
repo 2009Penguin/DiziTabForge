@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SettingsDialog</class>
+ <widget class="QDialog" name="SettingsDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>520</width>
+    <height>330</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>480</width>
+    <height>300</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>设置</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QDialog {
+    background-color: #11161f;
+}
+QLabel {
+    color: #cfd8e3;
+    font-size: 13px;
+}
+QLabel#headingLabel {
+    color: #e8eaed;
+    font-size: 15px;
+    font-weight: bold;
+}
+QLabel#hintLabel {
+    color: #93a1b5;
+    font-size: 12px;
+}
+QLabel#pathLabel {
+    color: #7f8da3;
+    font-size: 11px;
+}
+QLabel#statusLabel {
+    color: #ff8a65;
+    font-size: 12px;
+    min-height: 28px;
+}
+QLineEdit {
+    color: #e8eaed;
+    background-color: #0b0f16;
+    border: 1px solid #2c3648;
+    border-radius: 8px;
+    padding: 7px 10px;
+    selection-background-color: #3a8760;
+}
+QLineEdit:focus {
+    border: 1px solid #3d8c63;
+}
+QSpinBox {
+    color: #e8eaed;
+    background-color: #0b0f16;
+    border: 1px solid #2c3648;
+    border-radius: 8px;
+    padding: 6px 8px;
+}
+QPushButton {
+    color: #e8eaed;
+    background-color: #232d3d;
+    border: 1px solid #36435a;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+}
+QPushButton:hover {
+    background-color: #2c3850;
+}
+QPushButton#saveButton {
+    background-color: #2f6f4f;
+    border-color: #3d8c63;
+    font-weight: bold;
+}
+QPushButton#saveButton:hover {
+    background-color: #3a8760;
+}</string>
+  </property>
+  <layout class="QVBoxLayout" name="rootLayout">
+   <property name="spacing">
+    <number>12</number>
+   </property>
+   <property name="leftMargin">
+    <number>20</number>
+   </property>
+   <property name="topMargin">
+    <number>20</number>
+   </property>
+   <property name="rightMargin">
+    <number>20</number>
+   </property>
+   <property name="bottomMargin">
+    <number>20</number>
+   </property>
+   <item>
+    <widget class="QLabel" name="headingLabel">
+     <property name="text">
+      <string>GLM-4.6V-Flash 接口设置</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="hintLabel">
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>填写智谱开放平台的 API Key 后保存，配置会写入程序同级的 config.json。</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <property name="horizontalSpacing">
+      <number>14</number>
+     </property>
+     <property name="verticalSpacing">
+      <number>12</number>
+     </property>
+     <property name="labelAlignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="apiKeyTitle">
+       <property name="text">
+        <string>API Key</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="apiKeyEdit">
+       <property name="echoMode">
+        <enum>QLineEdit::Password</enum>
+       </property>
+       <property name="placeholderText">
+        <string>粘贴智谱 API Key</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="endpointTitle">
+       <property name="text">
+        <string>接口地址</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="endpointEdit">
+       <property name="placeholderText">
+        <string>https://open.bigmodel.cn/api/paas/v4/chat/completions</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="modelTitle">
+       <property name="text">
+        <string>模型名称</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="modelEdit">
+       <property name="placeholderText">
+        <string>glm-4.6v-flash</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="timeoutTitle">
+       <property name="text">
+        <string>超时（秒）</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QSpinBox" name="timeoutSpin">
+       <property name="minimum">
+        <number>10</number>
+       </property>
+       <property name="maximum">
+        <number>600</number>
+       </property>
+       <property name="value">
+        <number>90</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="pathLabel">
+     <property name="text">
+      <string>config.json</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="statusLabel">
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="buttonLayout">
+     <property name="spacing">
+      <number>10</number>
+     </property>
+     <item>
+      <spacer name="buttonSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="cancelButton">
+       <property name="text">
+        <string>取消</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="saveButton">
+       <property name="text">
+        <string>保存</string>
+       </property>
+       <property name="default">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>saveButton</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>saveSettings()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>436</x>
+     <y>286</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>259</x>
+     <y>164</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cancelButton</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>352</x>
+     <y>286</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>259</x>
+     <y>164</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

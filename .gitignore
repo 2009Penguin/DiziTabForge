@@ -1,0 +1,6 @@
+cmake-build-*/
+.idea/
+config.json
+dizi-tab-*.pdf
+crop-*.png
+*.user

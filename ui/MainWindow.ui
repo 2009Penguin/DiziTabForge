@@ -1,0 +1,568 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>800</width>
+    <height>600</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>800</width>
+    <height>600</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>笛子简谱 → 手势谱 PDF</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow {
+    background-color: #0f141c;
+}
+QWidget#centralWidget {
+    background-color: #0f141c;
+}
+QWidget#dropPage {
+    background-color: #0f141c;
+}
+QWidget#listPage {
+    background-color: #0f141c;
+}
+QWidget#busyPage {
+    background-color: #0f141c;
+}
+QLabel#titleLabel {
+    color: #e8eaed;
+    font-size: 22px;
+    font-weight: bold;
+}
+QLabel#subtitleLabel {
+    color: #93a1b5;
+    font-size: 12px;
+}
+QLabel#busyTitleLabel {
+    color: #e8eaed;
+    font-size: 18px;
+    font-weight: bold;
+}
+QLabel#pageTitleLabel {
+    color: #e8eaed;
+    font-size: 13px;
+    font-weight: bold;
+}
+QLabel#pageHintLabel {
+    color: #93a1b5;
+    font-size: 12px;
+}
+QLabel#dropGlyphLabel {
+    color: #3d8c63;
+    font-size: 44px;
+    font-weight: bold;
+}
+QLabel#dropTitleLabel {
+    color: #e8eaed;
+    font-size: 18px;
+    font-weight: bold;
+}
+QLabel#dropHintLabel {
+    color: #93a1b5;
+    font-size: 12px;
+}
+QLabel#busyHintLabel {
+    color: #93a1b5;
+    font-size: 12px;
+}
+QLabel#statusLabel {
+    color: #a9b6c8;
+    font-size: 12px;
+}
+QPushButton {
+    color: #e8eaed;
+    background-color: #232d3d;
+    border: 1px solid #36435a;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+}
+QPushButton:hover {
+    background-color: #2c3850;
+}
+QPushButton:pressed {
+    background-color: #1b2330;
+}
+QPushButton:disabled {
+    color: #6b7788;
+    background-color: #1a212c;
+    border-color: #262f3e;
+}
+QPushButton#generateButton {
+    background-color: #2f6f4f;
+    border-color: #3d8c63;
+    font-weight: bold;
+}
+QPushButton#generateButton:hover {
+    background-color: #3a8760;
+}
+QPushButton#settingsButton {
+    background-color: #1b2330;
+    border-color: #2c3648;
+}
+QPushButton#settingsButton:hover {
+    background-color: #263143;
+}
+QWidget#dropArea {
+    background-color: #131a25;
+    border: 2px dashed #384358;
+    border-radius: 14px;
+}
+QWidget#dropArea[dropActive="true"] {
+    background-color: #17273a;
+    border: 2px solid #3d8c63;
+}
+QListWidget#thumbList {
+    background-color: #0b0f16;
+    border: 1px solid #232d3d;
+    border-radius: 12px;
+    padding: 8px;
+    outline: none;
+}
+QListWidget#thumbList::item {
+    color: #cfd8e3;
+    background-color: #161e2a;
+    border: 1px solid #232d3d;
+    border-radius: 10px;
+    margin: 6px;
+    padding: 8px;
+}
+QListWidget#thumbList::item:hover {
+    border: 1px solid #3d8c63;
+    background-color: #1b2634;
+}
+QListWidget#thumbList::item:selected {
+    border: 1px solid #3d8c63;
+    background-color: #1f3346;
+    color: #ffffff;
+}
+QProgressBar#progressBar {
+    background-color: #131a25;
+    border: 1px solid #232d3d;
+    border-radius: 6px;
+    height: 12px;
+    text-align: center;
+    color: transparent;
+}
+QProgressBar#progressBar::chunk {
+    background-color: #3d8c63;
+    border-radius: 5px;
+}
+QMenu {
+    color: #e8eaed;
+    background-color: #161e2a;
+    border: 1px solid #2c3648;
+    padding: 6px;
+}
+QMenu::item {
+    padding: 6px 22px;
+    border-radius: 6px;
+}
+QMenu::item:selected {
+    background-color: #2c3850;
+}</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="rootLayout">
+    <property name="spacing">
+     <number>12</number>
+    </property>
+    <property name="leftMargin">
+     <number>18</number>
+    </property>
+    <property name="topMargin">
+     <number>16</number>
+    </property>
+    <property name="rightMargin">
+     <number>18</number>
+    </property>
+    <property name="bottomMargin">
+     <number>16</number>
+    </property>
+    <item>
+     <layout class="QHBoxLayout" name="headerLayout">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <item>
+       <layout class="QVBoxLayout" name="titleLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="titleLabel">
+          <property name="text">
+           <string>笛子简谱 → 手势谱 PDF</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="subtitleLabel">
+          <property name="text">
+           <string>拖入简谱图片，识别后生成带六孔指法手势图的 A4 PDF</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="headerSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="addButton">
+        <property name="text">
+         <string>导入图片</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="settingsButton">
+        <property name="toolTip">
+         <string>设置 API Key</string>
+        </property>
+        <property name="text">
+         <string>⚙ 设置</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QStackedWidget" name="mainStack">
+      <widget class="QWidget" name="dropPage">
+       <layout class="QVBoxLayout" name="dropPageLayout">
+        <property name="spacing">
+         <number>12</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="ImageDropWidget" name="dropArea">
+          <layout class="QVBoxLayout" name="dropAreaLayout">
+           <property name="spacing">
+            <number>8</number>
+           </property>
+           <item>
+            <spacer name="dropTopSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="dropGlyphLabel">
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="text">
+              <string>⬇</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="dropTitleLabel">
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="text">
+              <string>把简谱图片拖到这里</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="dropHintLabel">
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="text">
+              <string>支持一次拖入多张 PNG / JPG / WEBP / BMP 图片</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="dropBottomSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="listPage">
+       <layout class="QVBoxLayout" name="listPageLayout">
+        <property name="spacing">
+         <number>8</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="pageTitleLabel">
+          <property name="text">
+           <string>待识别图片</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="pageHintLabel">
+          <property name="text">
+           <string>双击缩略图裁剪，右键可以删除；也可以继续拖入新图片</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QListWidget" name="thumbList">
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="verticalScrollMode">
+           <enum>QAbstractItemView::ScrollPerPixel</enum>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>150</width>
+            <height>110</height>
+           </size>
+          </property>
+          <property name="movement">
+           <enum>QListView::Static</enum>
+          </property>
+          <property name="resizeMode">
+           <enum>QListView::Adjust</enum>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="busyPage">
+       <layout class="QVBoxLayout" name="busyPageLayout">
+        <property name="spacing">
+         <number>10</number>
+        </property>
+        <item>
+         <spacer name="busyTopSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="busyTitleLabel">
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+          <property name="text">
+           <string>正在识别并生成 PDF…</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QProgressBar" name="progressBar">
+          <property name="maximum">
+           <number>100</number>
+          </property>
+          <property name="value">
+           <number>0</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="busyHintLabel">
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+          <property name="text">
+           <string>识别大图可能需要几十秒，请保持网络畅通</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="busyBottomSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="footerLayout">
+      <property name="spacing">
+       <number>12</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="statusLabel">
+        <property name="text">
+         <string>等待拖入简谱图片</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="footerSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="generateButton">
+        <property name="minimumSize">
+         <size>
+          <width>140</width>
+          <height>38</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>生成 PDF</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ImageDropWidget</class>
+   <extends>QWidget</extends>
+   <header>ui/ImageDropWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>generateButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>generatePdf()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>700</x>
+     <y>560</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>settingsButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openSettings()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>740</x>
+     <y>40</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>addButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>chooseImages()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>640</x>
+     <y>40</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
