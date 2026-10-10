@@ -240,6 +240,14 @@ project_root/
 - 与对象状态无关的辅助函数一律是命名空间里的自由函数，没有只装静态方法的工具类。
 - 指法映射与绘制参数都是静态表，没有长 if-else 链或按音高逐个判断的 switch。
 - libcurl 与 nlohmann/json 的头文件只出现在 `core/network/GmlClient.cpp` 里，头文件中没有它们。
+- 日志只分两级：**`qDebug` 是开发期追踪，非 Debug 配置下由 `QT_NO_DEBUG_OUTPUT` 直接编译掉**，
+  Release 里不会留下任何 trace（也没有对应字符串）；**真正的问题**（网络失败、解析失败、
+  模型输出像噪声）一律用 `qWarning`，Release 里照样打印，方便排查。CMakeLists 用
+  `$<NOT:$<CONFIG:Debug>>` 生成器表达式给所有目标加上 `QT_NO_DEBUG_OUTPUT` 与 `NDEBUG`。
+- exe 的子系统同样按配置区分：**Debug 是控制台子系统**（双击会带一个控制台窗口，方便看
+  qDebug/qWarning），**Release 是 GUI 子系统**（不弹控制台）。CMakeLists 里写的是
+  `WIN32_EXECUTABLE "$<NOT:$<CONFIG:Debug>>"`；Release 因为不再有控制台，出错信息
+  全部走界面（`statusLabel` + 弹窗），不会静默失败。
 
 ## 7. 已知限制
 

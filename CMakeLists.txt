@@ -137,8 +137,15 @@ target_link_libraries(DiziTabForge PRIVATE dizi_ui)
 if (WIN32)
     enable_language(RC)
     target_sources(DiziTabForge PRIVATE res/app.rc)
-    set_target_properties(DiziTabForge PROPERTIES WIN32_EXECUTABLE OFF)
+    set_target_properties(DiziTabForge PROPERTIES WIN32_EXECUTABLE "$<NOT:$<CONFIG:Debug>>")
 endif ()
+
+foreach (DIZI_LOG_TARGET dizi_util dizi_config dizi_parse dizi_network dizi_render dizi_ui
+        DiziTabForge)
+    target_compile_definitions(${DIZI_LOG_TARGET} PRIVATE
+            "$<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG_OUTPUT>"
+            "$<$<NOT:$<CONFIG:Debug>>:NDEBUG>")
+endforeach ()
 
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(DEBUG_SUFFIX)

@@ -10,7 +10,7 @@ const std::string &ScorePipeline::error() const {
 
 bool ScorePipeline::parse(const std::string &notation, Score &target) {
     m_error.clear();
-    qWarning().noquote() << "[pipeline] raw notation =" << QString::fromStdString(notation);
+    qDebug().noquote() << "[pipeline] raw notation =" << QString::fromStdString(notation);
     TokenList tokens;
     if (!m_tokenizer.tokenize(notation, tokens, m_error)) {
         qWarning().noquote() << "[pipeline] tokenize failed:" << QString::fromStdString(m_error);
@@ -41,7 +41,7 @@ bool ScorePipeline::parse(const std::string &notation, Score &target) {
                              << QString::fromStdString(m_error);
         return false;
     }
-    qWarning().noquote() << "[pipeline] parsed notes =" << static_cast<int>(target.size());
+    qDebug().noquote() << "[pipeline] parsed notes =" << static_cast<int>(target.size());
     return true;
 }
 

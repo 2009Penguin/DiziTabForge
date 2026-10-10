@@ -221,8 +221,8 @@ bool ScoreParser::parse(const TokenList &input, TokenList &resolved,
     m_lastComplete = false;
     m_octave = 0;
     m_pendingAccidental = 0;
-    qWarning().noquote() << "[parse] input symbols ="
-                         << QString::fromStdString(describeTokens(input, input.size()));
+    qDebug().noquote() << "[parse] input symbols ="
+                       << QString::fromStdString(describeTokens(input, input.size()));
     for (m_tokenIndex = 0; m_tokenIndex < input.size(); ++m_tokenIndex) {
         if (!update(input[m_tokenIndex], resolved)) {
             return false;
@@ -231,8 +231,8 @@ bool ScoreParser::parse(const TokenList &input, TokenList &resolved,
     if (!close(resolved)) {
         return false;
     }
-    qWarning().noquote() << "[parse] next-note stream ="
-                         << QString::fromStdString(describeTokens(resolved, resolved.size()));
+    qDebug().noquote() << "[parse] next-note stream ="
+                       << QString::fromStdString(describeTokens(resolved, resolved.size()));
     return true;
 }
 
