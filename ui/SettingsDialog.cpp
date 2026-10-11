@@ -25,7 +25,7 @@ SettingsDialog::~SettingsDialog() {
 }
 
 dizi::AppConfig SettingsDialog::collect() const {
-    dizi::AppConfig config = dizi::ConfigRepository::defaults();
+    dizi::AppConfig config;
     config.apiKey = ui->apiKeyEdit->text().trimmed();
     config.endpoint = ui->endpointEdit->text().trimmed();
     config.model = ui->modelEdit->text().trimmed();
@@ -40,11 +40,15 @@ void SettingsDialog::showStatus(const QString &message) {
 void SettingsDialog::saveSettings() {
     const dizi::AppConfig config = collect();
     if (config.apiKey.isEmpty()) {
-        showStatus(QStringLiteral("API Key cannot be empty."));
+        showStatus(QStringLiteral("请填写 API Key。"));
         return;
     }
     if (config.endpoint.isEmpty()) {
-        showStatus(QStringLiteral("Endpoint cannot be empty."));
+        showStatus(QStringLiteral("请填写接口地址：base URL 或完整的 chat/completions 地址。"));
+        return;
+    }
+    if (config.model.isEmpty()) {
+        showStatus(QStringLiteral("请填写模型名称，写法按服务商的文档。"));
         return;
     }
     dizi::ConfigRepository repository(m_filePath);

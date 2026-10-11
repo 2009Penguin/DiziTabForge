@@ -2,9 +2,9 @@
 
 笛子简谱图片 → 带六孔指法手势图的 A4 PDF。
 
-把简谱图片导入窗口，程序调用 **Qwen/Qwen3-VL-8B-Instruct** 视觉模型把图上的简谱识别成文本记法，
-再用内置的 PDF 写入器渲染成竖版 A4 的指法手势谱 PDF：每个音符画出六个音孔（实心=按住、空心=松开），
-音符上方是简谱记号，下方是时值延音线，最下面是该音的音名。
+把简谱图片导入窗口，程序调用**你在设置里指定的 OpenAI 兼容视觉模型**（`chat/completions`）
+把图上的简谱识别成文本记法，再渲染成竖版 A4 的指法手势谱 PDF：每个音符画出六个音孔
+（实心=按住、空心=松开），音符上方是简谱记号，下方是时值延音线，最下面是该音的音名。
 
 ## 1. 依赖与构建
 
@@ -80,13 +80,9 @@ libcurl 是静态库不需要复制 DLL。
 
 ## 2. 使用
 
-**前置条件（魔搭）**：魔搭的 API-Inference 要求账号**已绑定阿里云账号并完成实名认证**，
-绑定后才会给免费调用额度。否则无论填什么模型都会返回
-`401 Please bind your Alibaba Cloud account before use.`。绑定入口在魔搭官网右上角头像 →
-账号设置里的"阿里云账号绑定"。
-
-1. 启动程序，点击右上角「设置」，填入 **API Key** 保存。配置写入 exe 同级的 `config.json`。
-   默认接的是**魔搭 ModelScope** 的 `Qwen/Qwen3-VL-8B-Instruct`，所以这里填魔搭的 Key（`ms-` 开头）。
+1. 启动程序，点击右上角「设置」，把 **API Key、接口地址、模型名称** 三项都填上再保存。
+   配置写入 exe 同级的 `config.json`。**这三项都没有内置默认值** —— 任何 OpenAI 兼容的
+   视觉模型服务都行，具体地址与模型名按服务商的文档填。
 2. 点中间的「导入图片」，选择一张或多张简谱图片（已有图片时列表右上角是「继续导入」）。
 3. 双击缩略图可以裁剪：拖动鼠标框选要保留的区域，裁剪结果保存为同目录下的新 PNG
    并替换列表中的原图，源文件不会被修改。
@@ -94,13 +90,13 @@ libcurl 是静态库不需要复制 DLL。
    `dizi-tab-<时间戳>.pdf`，默认目录是第一张图片所在目录），识别完成后写入该 PDF
    并用系统默认程序打开。程序不会往图片目录写任何东西。
 
-`config.json` 结构（默认值）：
+`config.json` 结构（第一次保存设置后生成，三项为空时程序会提示去「设置」里补齐）：
 
 ```json
 {
-    "apiKey": "你的魔搭 API Key",
-    "endpoint": "https://api-inference.modelscope.cn/v1",
-    "model": "Qwen/Qwen3-VL-8B-Instruct",
+    "apiKey": "你的 API Key",
+    "endpoint": "https://你的服务商/v1",
+    "model": "服务商文档里的模型名",
     "timeoutSeconds": 90
 }
 ```
@@ -109,24 +105,19 @@ libcurl 是静态库不需要复制 DLL。
 `/chat/completions` 时自动补全，末尾多余的 `/` 也会被去掉。所以下面三种写法等价：
 
 ```
-https://api-inference.modelscope.cn/v1
-https://api-inference.modelscope.cn/v1/
-https://api-inference.modelscope.cn/v1/chat/completions
+https://你的服务商/v1
+https://你的服务商/v1/
+https://你的服务商/v1/chat/completions
 ```
 
-换用阿里云百炼（Model Studio）也可以，只要改这两项：
+只要是 OpenAI 兼容的 `chat/completions` 接口、且模型支持图片输入即可，请求体
+（`messages[].content` 里的 `text` 与 `image_url`）各家一致，所以换服务商**不需要改代码**，
+只改这两项。注意各地域/各平台的 Key 与地址不通用，模型名大小写按各平台写法填
+（例如魔搭是 `Qwen/Qwen3-VL-8B-Instruct`，百炼是 `qwen3-vl-8b-instruct`）。
 
-```json
-{
-    "endpoint": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    "model": "qwen3-vl-8b-instruct"
-}
-```
-
-两边都是 OpenAI 兼容的 `chat/completions` 接口，请求体（`messages[].content` 里的
-`text` 与 `image_url`）完全一致，因此换服务商不需要改代码，只改这两项即可。
-注意各地域的百炼 Key 与地址不通用；模型名大小写按各平台的写法填（魔搭是
-`Qwen/Qwen3-VL-8B-Instruct`，百炼是 `qwen3-vl-8b-instruct`）。
+如果用的是**魔搭 ModelScope**，还有个前置条件：账号需**已绑定阿里云账号并完成实名认证**，
+否则无论填什么模型都会返回 `401 Please bind your Alibaba Cloud account before use.`。
+绑定入口在魔搭官网右上角头像 → 账号设置里的"阿里云账号绑定"。
 
 ## 3. 识别记法
 
@@ -271,7 +262,9 @@ project_root/
   `data:` 的 MIME 也是按真实格式写的。反过来，如果格式真的不受支持（缺插件），报错会直接写明
   「文件是 XXX 格式，但程序缺少该格式的解码插件」。
 - 若识别结果里出现了超出三八度的音，或者指法表里没有的音，PDF 上用 `?` 占位。
-- `ConfigRepository::load` 在 `config.json` 不存在时会直接回退到默认配置，不视为错误。
+- `ConfigRepository::load` 在 `config.json` 不存在时返回一份**空配置**（apiKey / endpoint / model
+  都是空串，只有 `timeoutSeconds` 保持 90），界面会提示「尚未设置 …，请点击右上角「设置」」，
+  点「生成 PDF」时也会先检查这三项是否齐全。程序里没有任何内置的服务商地址或模型名。
 - 手写那套 PDF 写入器（`VectorPdfCanvas` + `PdfWriter`）只实现渲染用到的子集（未压缩内容流、
   Standard 14 字体的 Helvetica、嵌入的 TrueType CJK 子集字体；无书签 / 超链接 / 压缩）。
   默认走的是 Qt 引擎，不受这些限制影响。

@@ -18,18 +18,11 @@ QString ConfigRepository::filePath() const {
     return m_filePath;
 }
 
-AppConfig ConfigRepository::defaults() {
-    AppConfig config;
-    config.endpoint = QStringLiteral("https://api-inference.modelscope.cn/v1");
-    config.model = QStringLiteral("Qwen/Qwen3-VL-8B-Instruct");
-    return config;
-}
-
 bool ConfigRepository::load(AppConfig &target, QString &error) const {
     QFile file(m_filePath);
     if (!file.exists()) {
-        target = defaults();
-        error = QStringLiteral("config.json not found at %1, defaults are used").arg(m_filePath);
+        target = AppConfig();
+        error = QStringLiteral("config.json not found at %1").arg(m_filePath);
         return false;
     }
     if (!file.open(QIODevice::ReadOnly)) {
@@ -42,10 +35,10 @@ bool ConfigRepository::load(AppConfig &target, QString &error) const {
         return false;
     }
     const QJsonObject object = document.object();
-    AppConfig loaded = defaults();
+    AppConfig loaded;
     loaded.apiKey = object.value(QStringLiteral("apiKey")).toString();
-    loaded.endpoint = object.value(QStringLiteral("endpoint")).toString(loaded.endpoint);
-    loaded.model = object.value(QStringLiteral("model")).toString(loaded.model);
+    loaded.endpoint = object.value(QStringLiteral("endpoint")).toString();
+    loaded.model = object.value(QStringLiteral("model")).toString();
     loaded.timeoutSeconds = object.value(QStringLiteral("timeoutSeconds")).toInt(
             loaded.timeoutSeconds);
     target = loaded;

@@ -81,6 +81,20 @@ struct WorkerResult {
     QString error;
 };
 
+QStringList missingConfigFields(const dizi::AppConfig &config) {
+    QStringList missing;
+    if (config.apiKey.trimmed().isEmpty()) {
+        missing.append(QStringLiteral("API Key"));
+    }
+    if (config.endpoint.trimmed().isEmpty()) {
+        missing.append(QStringLiteral("接口地址"));
+    }
+    if (config.model.trimmed().isEmpty()) {
+        missing.append(QStringLiteral("模型名称"));
+    }
+    return missing;
+}
+
 bool prepareImages(const QStringList &paths, dizi::GmlRequest &request, QString &error) {
     const dizi::ImageEncoder encoder;
     for (const QString &path : paths) {
@@ -157,8 +171,10 @@ void MainWindow::loadConfig() {
     dizi::ConfigRepository repository(path_util::configFilePath());
     QString error;
     repository.load(m_config, error);
-    if (m_config.apiKey.isEmpty()) {
-        ui->statusLabel->setText(QStringLiteral("尚未设置 API Key，请点击右上角「设置」"));
+    const QStringList missing = missingConfigFields(m_config);
+    if (!missing.isEmpty()) {
+        ui->statusLabel->setText(QStringLiteral("尚未设置 %1，请点击右上角「设置」")
+                                         .arg(missing.join(QStringLiteral("、"))));
     }
 }
 
@@ -290,8 +306,10 @@ void MainWindow::generatePdf() {
         return;
     }
     loadConfig();
-    if (m_config.apiKey.isEmpty()) {
-        showError(QStringLiteral("还没有设置 API Key，请先在「设置」里填写。"));
+    const QStringList missing = missingConfigFields(m_config);
+    if (!missing.isEmpty()) {
+        showError(QStringLiteral("还没有设置 %1，请先在「设置」里填写。")
+                          .arg(missing.join(QStringLiteral("、"))));
         return;
     }
     startRecognition();

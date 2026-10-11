@@ -22,8 +22,6 @@ public:
 
     bool save(const AppConfig &config, QString &error) const;
 
-    static AppConfig defaults();
-
 private:
     QString m_filePath;
 };
