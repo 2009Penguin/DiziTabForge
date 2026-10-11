@@ -31,9 +31,9 @@ constexpr double kDurationFontSize = 14.0;
 constexpr double kDurationBaseline = 34.0;
 constexpr double kHoleFirstCenter = 46.0;
 constexpr double kHoleSpacing = 6.4;
-constexpr double kHoleRadius = 2.4;
+constexpr double kHoleRadius = 3.1;
 constexpr double kHoleColumnOffset = 26.0;
-constexpr double kLabelFontSize = 8.5;
+constexpr double kLabelFontSize = 9.0;
 constexpr double kLabelBaseline = 48.0;
 constexpr double kLabelColumnOffset = 4.0;
 
@@ -65,11 +65,11 @@ void drawNote(PageCanvas &canvas, const FingerTable &table, const Note &note, do
         canvas.drawText(columnX, cellTop + kDurationBaseline, QString::fromStdString(duration));
     }
     if (!fingering.playable) {
+        canvas.setFontSize(kLabelFontSize);
+        canvas.drawText(columnX + kLabelColumnOffset, cellTop + kLabelBaseline,
+                        QStringLiteral("?"));
         return;
     }
-    canvas.setFontSize(kLabelFontSize);
-    canvas.drawText(columnX + kLabelColumnOffset, cellTop + kLabelBaseline,
-                    QString::fromStdString(fingering.pitchName));
     drawHoles(canvas, columnX + kHoleColumnOffset, cellTop + kHoleFirstCenter, fingering);
 }
 

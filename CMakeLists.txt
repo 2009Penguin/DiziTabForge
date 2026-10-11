@@ -65,7 +65,8 @@ set(DIZI_MODEL_SOURCES)
 set(DIZI_UTIL_SOURCES
         core/util/StringUtil.cpp
         core/util/ImageUtil.cpp
-        core/util/PathUtil.cpp)
+        core/util/PathUtil.cpp
+        core/util/ProgressTicker.cpp)
 
 set(DIZI_CONFIG_SOURCES
         core/config/ConfigRepository.cpp)

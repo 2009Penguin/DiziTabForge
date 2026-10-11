@@ -11,6 +11,7 @@
 #include "core/config/ConfigRepository.h"
 #include "core/model/Note.h"
 #include "core/render/PdfRenderer.h"
+#include "core/util/ProgressTicker.h"
 
 class QPoint;
 
@@ -50,6 +51,8 @@ private slots:
 
     void reportProgress(qint64 received, qint64 total);
 
+    void reportPercent(int percent);
+
     void finishGeneration();
 
 private:
@@ -86,6 +89,7 @@ private:
     dizi::PdfRenderer m_renderer;
     QFutureWatcher<int> m_watcher;
     RecognitionOutcome m_outcome;
+    dizi::ProgressTicker m_ticker;
 };
 
 #endif

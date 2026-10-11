@@ -2,7 +2,6 @@
 #define DIZITABFORGE_CORE_MODEL_FINGERPATTERN_H
 
 #include <array>
-#include <string>
 
 namespace dizi {
 
@@ -14,9 +13,7 @@ enum class HoleState {
 };
 
 struct FingerPattern {
-    std::string pitchName;
     std::array<HoleState, kHoleCount> holes{};
-    bool overblown = false;
     bool playable = true;
 };
 

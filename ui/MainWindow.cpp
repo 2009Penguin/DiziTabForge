@@ -24,6 +24,7 @@
 #include "core/parse/ScorePipeline.h"
 #include "core/util/ImageUtil.h"
 #include "core/util/PathUtil.h"
+#include "core/util/ProgressTicker.h"
 #include "ui/CropDialog.h"
 #include "ui/SettingsDialog.h"
 
@@ -119,6 +120,7 @@ void MainWindow::connectSignals() {
     connect(ui->thumbList, &QListWidget::customContextMenuRequested, this,
             &MainWindow::showThumbnailMenu);
     connect(&m_watcher, &QFutureWatcher<int>::finished, this, &MainWindow::finishGeneration);
+    connect(&m_ticker, &dizi::ProgressTicker::percentChanged, this, &MainWindow::reportPercent);
     auto *shortcut = new QShortcut(QKeySequence::Delete, ui->thumbList);
     connect(shortcut, &QShortcut::activated, this, &MainWindow::removeSelectedItem);
 }
@@ -269,8 +271,9 @@ void MainWindow::generatePdf() {
 
 void MainWindow::startRecognition() {
     ui->generateButton->setEnabled(false);
-    ui->progressBar->setRange(0, 0);
+    ui->progressBar->setRange(0, 100);
     ui->statusLabel->setText(QStringLiteral("正在识别 %1 张图片…").arg(m_imagePaths.size()));
+    m_ticker.begin();
     const QStringList paths = m_imagePaths;
     const dizi::AppConfig config = m_config;
     m_outcome = RecognitionOutcome();
@@ -292,20 +295,23 @@ void MainWindow::startRecognition() {
 }
 
 void MainWindow::reportProgress(qint64 received, qint64 total) {
-    if (total <= 0) {
+    m_ticker.reportUpload(received, total);
+}
+
+void MainWindow::reportPercent(int percent) {
+    ui->progressBar->setRange(0, 100);
+    ui->progressBar->setValue(percent);
+    if (percent >= 100) {
         return;
     }
-    ui->progressBar->setRange(0, 100);
-    ui->progressBar->setValue(static_cast<int>(received * 100 / total));
-    ui->statusLabel->setText(QStringLiteral("已上传 %1 KB / %2 KB")
-                                     .arg(received / 1024)
-                                     .arg(total / 1024));
+    ui->statusLabel->setText(QStringLiteral("正在识别 %1 张图片… %2%")
+                                     .arg(m_imagePaths.size())
+                                     .arg(percent));
 }
 
 void MainWindow::finishGeneration() {
+    m_ticker.complete();
     ui->generateButton->setEnabled(!m_imagePaths.isEmpty());
-    ui->progressBar->setRange(0, 100);
-    ui->progressBar->setValue(0);
     if (m_outcome.error.has_value()) {
         showError(*m_outcome.error);
         return;

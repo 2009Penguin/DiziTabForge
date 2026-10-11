@@ -4,40 +4,46 @@ namespace dizi {
 
 namespace {
 
-constexpr int kRowCount = 7;
+constexpr int kRowCount = 16;
 constexpr int kCovered = 1;
 
 using HolePattern = std::array<int, kHoleCount>;
 
 struct PatternRow {
+    int octave;
     int number;
-    int accidental;
-    const char *pitchName;
     HolePattern holes;
 };
 
 const std::array<PatternRow, kRowCount> &patternTable() {
     static const std::array<PatternRow, kRowCount> rows{{
-            {1, 0, "C5", {kCovered, 0, 0, 0, 0, 0}},
-            {2, 0, "D5", {0, 0, 0, 0, 0, 0}},
-            {3, 0, "E5", {0, 0, 0, 0, 0, kCovered}},
-            {4, 0, "F5", {kCovered, kCovered, kCovered, kCovered, kCovered, kCovered}},
-            {5, 0, "G5", {kCovered, kCovered, kCovered, kCovered, kCovered, kCovered}},
-            {6, 0, "A5", {kCovered, kCovered, kCovered, kCovered, kCovered, 0}},
-            {7, 0, "B5", {kCovered, kCovered, kCovered, kCovered, 0, 0}},
+            {-1, 5, {kCovered, kCovered, kCovered, kCovered, kCovered, kCovered}},
+            {-1, 6, {kCovered, kCovered, kCovered, kCovered, kCovered, 0}},
+            {-1, 7, {kCovered, kCovered, kCovered, kCovered, 0, 0}},
+            {0, 1, {kCovered, kCovered, kCovered, 0, 0, 0}},
+            {0, 2, {kCovered, kCovered, 0, 0, 0, 0}},
+            {0, 3, {kCovered, 0, 0, 0, 0, 0}},
+            {0, 4, {0, kCovered, kCovered, 0, 0, 0}},
+            {0, 5, {0, kCovered, kCovered, kCovered, kCovered, kCovered}},
+            {0, 6, {kCovered, kCovered, kCovered, kCovered, kCovered, 0}},
+            {0, 7, {kCovered, kCovered, kCovered, kCovered, 0, 0}},
+            {1, 1, {kCovered, kCovered, kCovered, 0, 0, 0}},
+            {1, 2, {kCovered, kCovered, 0, 0, 0, 0}},
+            {1, 3, {kCovered, 0, 0, 0, 0, 0}},
+            {1, 4, {0, kCovered, kCovered, kCovered, kCovered, 0}},
+            {1, 5, {0, kCovered, kCovered, kCovered, kCovered, kCovered}},
+            {1, 6, {kCovered, kCovered, 0, kCovered, kCovered, 0}},
     }};
     return rows;
 }
 
 bool matches(const PatternRow &row, const Note &note) {
-    return row.number == note.number &&
-           row.accidental == static_cast<int>(note.accidental);
+    return row.octave == note.octave && row.number == note.number &&
+           note.accidental == Accidental::Natural;
 }
 
-Fingering makeFingering(const PatternRow &row, const Note &note) {
+Fingering makeFingering(const PatternRow &row) {
     Fingering fingering;
-    fingering.pitchName = row.pitchName;
-    fingering.overblown = note.octave != 0;
     for (int index = 0; index < kHoleCount; ++index) {
         const std::size_t slot = static_cast<std::size_t>(index);
         fingering.holes.at(slot) = row.holes.at(slot) != 0 ? HoleState::Covered : HoleState::Open;
@@ -45,10 +51,8 @@ Fingering makeFingering(const PatternRow &row, const Note &note) {
     return fingering;
 }
 
-Fingering unknownFingering(const Note &note) {
+Fingering unknownFingering() {
     Fingering fingering;
-    fingering.pitchName = "?";
-    fingering.overblown = note.octave >= 1;
     fingering.playable = false;
     return fingering;
 }
@@ -65,14 +69,14 @@ const std::string &FingerTable::keyName() const {
 
 Fingering FingerTable::lookup(const Note &note) const {
     if (note.rest) {
-        return unknownFingering(note);
+        return unknownFingering();
     }
     for (const PatternRow &row : patternTable()) {
         if (matches(row, note)) {
-            return makeFingering(row, note);
+            return makeFingering(row);
         }
     }
-    return unknownFingering(note);
+    return unknownFingering();
 }
 
 }
