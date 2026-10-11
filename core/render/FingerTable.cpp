@@ -59,6 +59,22 @@ Fingering unknownFingering() {
 
 }
 
+std::string playableRangeText() {
+    std::string text;
+    for (const PatternRow &row : patternTable()) {
+        if (!text.empty()) {
+            text += ' ';
+        }
+        text += static_cast<char>('0' + row.number);
+        if (row.octave <= -1) {
+            text += ',';
+        } else if (row.octave >= 1) {
+            text += '\'';
+        }
+    }
+    return text;
+}
+
 FingerTable::FingerTable()
     : m_keyName("\u7b52\u97f3\u4f5c5") {
 }

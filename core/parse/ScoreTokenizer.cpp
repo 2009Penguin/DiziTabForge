@@ -3,7 +3,6 @@
 #include <QDebug>
 
 #include <cctype>
-#include <utility>
 
 namespace dizi {
 
@@ -26,9 +25,6 @@ bool symbolToToken(char symbol, TokenType &target) {
         case '-':
             target = TokenType::Hold;
             return true;
-        case '0':
-            target = TokenType::Rest;
-            return true;
         default:
             return false;
     }
@@ -40,80 +36,53 @@ std::string describeSymbol(char symbol) {
 
 }
 
-bool ScoreTokenizer::readSymbol(char symbol, std::size_t position, ScoreToken &target,
-                                std::string &error) const {
-    TokenType type = TokenType::Beat;
-    if (!symbolToToken(symbol, type)) {
-        error = std::string("Unexpected character '") + describeSymbol(symbol) +
-                "' at index " + std::to_string(position);
-        return false;
+bool ScoreTokenizer::readToken(char symbol, std::size_t position, ScoreToken &target) const {
+    const bool isDigit = std::isdigit(static_cast<unsigned char>(symbol)) != 0;
+    if (isDigit && symbol != '0') {
+        const int beat = symbol - '0';
+        if (beat < 1 || beat > 7) {
+            return false;
+        }
+        target.type = TokenType::Beat;
+        target.value = beat;
+    } else if (symbol == '0') {
+        target.type = TokenType::Rest;
+        target.value = 0;
+    } else {
+        TokenType type = TokenType::Beat;
+        if (!symbolToToken(symbol, type)) {
+            return false;
+        }
+        target.type = type;
+        target.value = 0;
     }
-    target.type = type;
-    target.position = position;
-    target.text = describeSymbol(symbol);
-    target.value = 0;
-    return true;
-}
-
-bool ScoreTokenizer::readRest(char symbol, std::size_t position, ScoreToken &target,
-                              std::string &error) const {
-    if (symbol != '0') {
-        error = std::string("Unexpected character '") + describeSymbol(symbol) +
-                "' at index " + std::to_string(position);
-        return false;
-    }
-    target.type = TokenType::Rest;
-    target.position = position;
-    target.text = describeSymbol(symbol);
-    target.value = 0;
-    return true;
-}
-
-bool ScoreTokenizer::readBeat(char symbol, std::size_t position, ScoreToken &target,
-                              std::string &error) const {
-    if (std::isdigit(static_cast<unsigned char>(symbol)) == 0) {
-        error = "Expected a digit at index " + std::to_string(position);
-        return false;
-    }
-    const int beat = symbol - '0';
-    if (beat < 1 || beat > 7) {
-        error = "Pitch digit '" + describeSymbol(symbol) + "' at index " +
-                std::to_string(position) + " is outside the range 1-7";
-        return false;
-    }
-    target.type = TokenType::Beat;
-    target.value = beat;
     target.position = position;
     target.text = describeSymbol(symbol);
     return true;
 }
 
-bool ScoreTokenizer::tokenize(const std::string &text, TokenList &target,
-                              std::string &error) const {
+bool ScoreTokenizer::tokenize(const std::string &text, TokenList &target) {
     target.clear();
-    error.clear();
+    m_skipped = 0;
     for (std::size_t position = 0; position < text.size(); ++position) {
         const char symbol = text[position];
         if (std::isspace(static_cast<unsigned char>(symbol)) != 0) {
             continue;
         }
         ScoreToken token;
-        const bool isDigit = std::isdigit(static_cast<unsigned char>(symbol)) != 0;
-        if (isDigit && symbol != '0') {
-            if (!readBeat(symbol, position, token, error)) {
-                return false;
-            }
-        } else if (symbol == '0') {
-            if (!readRest(symbol, position, token, error)) {
-                return false;
-            }
-        } else if (!readSymbol(symbol, position, token, error)) {
-            return false;
+        if (!readToken(symbol, position, token)) {
+            ++m_skipped;
+            continue;
         }
         target.push_back(token);
     }
-    qDebug().noquote() << "[tokenizer] symbol count =" << static_cast<int>(target.size());
+    qDebug().noquote() << "[tokenizer] symbols =" << static_cast<int>(target.size())
+                       << " skipped =" << static_cast<int>(m_skipped);
     return true;
+}
+
+std::size_t ScoreTokenizer::skippedCount() const {
+    return m_skipped;
 }
 
 }

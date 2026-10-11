@@ -1,6 +1,7 @@
 #ifndef DIZITABFORGE_CORE_PARSE_SCOREPIPELINE_H
 #define DIZITABFORGE_CORE_PARSE_SCOREPIPELINE_H
 
+#include <cstddef>
 #include <string>
 
 #include "core/model/Note.h"
@@ -16,6 +17,8 @@ public:
     bool parse(const std::string &notation, Score &target);
 
     const std::string &error() const;
+
+    std::size_t skippedCount() const;
 
 private:
     bool looksLikeNoise(const std::string &notation) const;

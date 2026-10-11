@@ -64,6 +64,9 @@ void drawNote(PageCanvas &canvas, const FingerTable &table, const Note &note, do
         canvas.setFontSize(kDurationFontSize);
         canvas.drawText(columnX, cellTop + kDurationBaseline, QString::fromStdString(duration));
     }
+    if (note.rest) {
+        return;
+    }
     if (!fingering.playable) {
         canvas.setFontSize(kLabelFontSize);
         canvas.drawText(columnX + kLabelColumnOffset, cellTop + kLabelBaseline,

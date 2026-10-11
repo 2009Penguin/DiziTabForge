@@ -5,9 +5,9 @@ namespace dizi {
 namespace {
 
 constexpr int kUploadCeiling = 40;
-constexpr int kWaitingCeiling = 95;
-constexpr int kTickMilliseconds = 250;
-constexpr int kRampDivisor = 12;
+constexpr int kWaitingCeiling = 99;
+constexpr int kTickMilliseconds = 400;
+constexpr int kRampDivisor = 18;
 
 }
 
@@ -45,14 +45,7 @@ void ProgressTicker::advance() {
 void ProgressTicker::complete() {
     m_running = false;
     m_timer.stop();
-    publish(100);
-}
-
-void ProgressTicker::reset() {
-    m_running = false;
-    m_timer.stop();
-    m_percent = 0;
-    emit percentChanged(m_percent);
+    publish(kWaitingCeiling);
 }
 
 void ProgressTicker::publish(int percent) {

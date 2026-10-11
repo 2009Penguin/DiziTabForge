@@ -8,13 +8,18 @@ const std::string &ScorePipeline::error() const {
     return m_error;
 }
 
+std::size_t ScorePipeline::skippedCount() const {
+    return m_tokenizer.skippedCount();
+}
+
 bool ScorePipeline::parse(const std::string &notation, Score &target) {
     m_error.clear();
     qDebug().noquote() << "[pipeline] raw notation =" << QString::fromStdString(notation);
     TokenList tokens;
-    if (!m_tokenizer.tokenize(notation, tokens, m_error)) {
-        qWarning().noquote() << "[pipeline] tokenize failed:" << QString::fromStdString(m_error);
-        return false;
+    m_tokenizer.tokenize(notation, tokens);
+    if (m_tokenizer.skippedCount() > 0) {
+        qWarning().noquote() << "[pipeline] skipped unreadable characters ="
+                             << static_cast<int>(m_tokenizer.skippedCount());
     }
     if (tokens.empty()) {
         m_error = "The model returned no playable notation symbols.";

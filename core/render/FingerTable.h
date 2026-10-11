@@ -23,6 +23,8 @@ private:
     std::string m_keyName;
 };
 
+std::string playableRangeText();
+
 }
 
 #endif

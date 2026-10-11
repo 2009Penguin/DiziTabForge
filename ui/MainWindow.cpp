@@ -33,20 +33,48 @@ namespace {
 constexpr int kThumbnailBound = 300;
 constexpr int kMaxErrorLines = 6;
 
-const QString kPrompt = QStringLiteral(
-        "你是笛子简谱（数字谱）识别助手。任务：只把图片里的简谱转写成纯文本数字谱。"
-        "除简谱本身以外的内容一律完全忽略、一个字都不要输出，包括但不限于："
-        "歌词与歌词文字、曲名标题、作者/编曲/演唱/制谱者、调号与拍号的说明文字、页码、"
-        "水印、二维码、印章、logo、指法与演奏提示文字、五线谱及五线谱上的音符与谱号、"
-        "和弦记号、速度/力度/表情记号（如 ♩=90、D.C.、ff）、乐器与段落说明、"
-        "背景图案、页边批注与手写笔记。"
-        "简谱行里的非音符符号也要忽略：小节线、反复记号、跳房子记号、连音线、"
-        "换气记号、装饰音标记。"
-        "记法规则：中音区直接写数字 1-7；高音区在数字后加单引号，例如 1'；"
-        "低音区在数字后加逗号，例如 6,；减号 - 表示延音线，延长前面一个音一拍；"
-        "0 表示休止符；# 表示升号、b 表示降号，写在数字前面。"
-        "输出格式：每行简谱输出为一行，音符之间用一个空格分隔；"
-        "只输出这些记法本身，不要解释、不要表格、不要标点、不要 Markdown 代码块。");
+QString promptPreamble() {
+    return QStringLiteral(
+            "你是笛子简谱（数字谱）识别助手。任务：只把图片里的简谱转写成纯文本数字谱。"
+            "除简谱本身以外的内容一律完全忽略、一个字都不要输出，包括但不限于："
+            "歌词与歌词文字、曲名标题、作者/编曲/演唱/制谱者、调号与拍号的说明文字、页码、"
+            "水印、二维码、印章、logo、指法与演奏提示文字、五线谱及五线谱上的音符与谱号、"
+            "和弦记号、速度/力度/表情记号（如 ♩=90、D.C.、ff）、乐器与段落说明、"
+            "背景图案、页边批注与手写笔记。"
+            "简谱行里的非音符符号也要忽略：小节线、反复记号、跳房子记号、连音线、"
+            "换气记号、装饰音标记。"
+            "两种小圆点要分清：写在数字正下方的点表示低八度，转写成数字后的逗号，例如 6,；"
+            "写在数字右边的点是附点（时值加半拍），本程序不表示，直接省略不写。"
+            "记法规则：中音区直接写数字 1-7；高音区在数字后加单引号，例如 1'；"
+            "低音区在数字后加逗号，例如 6,；减号 - 表示延音线，延长前面一个音一拍；"
+            "0 表示休止符；# 表示升号、b 表示降号，写在数字前面。");
+}
+
+QString promptRangeGuard() {
+    return QStringLiteral(
+            "音域校验（很重要）：本谱是筒音作 5，笛子实际能吹的音只有下面这些"
+            "（这一串由程序内置指法表生成，不要输出此外的任何音）：");
+}
+
+QString promptInferenceRules() {
+    return QStringLiteral(
+            "如果你读出的音落在这个范围之外（例如更低音区的数字，或者比 6' 更高的音），"
+            "那一定是识别误差，不要原样输出这个吹不出来的音，而要推测它原本是什么音，"
+            "并且只输出推测后的结果："
+            "第一优先，怀疑八度记号被误读——去掉多余的低音逗号或高音单引号，取同数字的中音，"
+            "例如 3, 按 3 输出、7' 按 7 输出；"
+            "第二，如果去掉八度记号后与前后音明显冲突（旋律跳进突兀、调式不合），"
+            "就按音阶级进选最接近的那个合法音，例如低音 4, 更可能是 5,；"
+            "第三，无论如何输出都必须落在上面列出的音之内，不要输出 ? 或任何说明文字。"
+            "输出格式：每行简谱输出为一行，音符之间用一个空格分隔；"
+            "只输出这些记法本身，不要解释、不要表格、不要标点、不要 Markdown 代码块。");
+}
+
+QString buildPrompt() {
+    const QString range = QString::fromStdString(dizi::playableRangeText());
+    return promptPreamble() + promptRangeGuard() + range + QStringLiteral("。") +
+           promptInferenceRules();
+}
 
 struct WorkerResult {
     QStringList notations;
@@ -72,7 +100,7 @@ bool runRecognition(const dizi::AppConfig &config, const QStringList &paths, Wor
     request.apiKey = config.apiKey;
     request.model = config.model;
     request.timeoutSeconds = config.timeoutSeconds;
-    request.prompt = kPrompt;
+    request.prompt = buildPrompt();
     QString error;
     if (!prepareImages(paths, request, error)) {
         result.error = error;
@@ -301,9 +329,6 @@ void MainWindow::reportProgress(qint64 received, qint64 total) {
 void MainWindow::reportPercent(int percent) {
     ui->progressBar->setRange(0, 100);
     ui->progressBar->setValue(percent);
-    if (percent >= 100) {
-        return;
-    }
     ui->statusLabel->setText(QStringLiteral("正在识别 %1 张图片… %2%")
                                      .arg(m_imagePaths.size())
                                      .arg(percent));

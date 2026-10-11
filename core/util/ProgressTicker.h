@@ -19,8 +19,6 @@ public:
 
     void complete();
 
-    void reset();
-
 signals:
     void percentChanged(int percent);
 
